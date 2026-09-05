@@ -68,17 +68,19 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 .side-foot{display:flex;flex-direction:column;gap:16px}
 .acct{position:relative;display:flex;align-items:center;gap:10px;border:1.5px solid var(--ink);border-radius:999px;padding:9px 14px;background:var(--sheet);cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .15s,box-shadow .15s}
 .acct:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}
-.acct .avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--sheet);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.acct .avatar{width:30px;height:30px;border-radius:50%;background:var(--ink) center/cover no-repeat;color:var(--sheet);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
 .acct-t{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
 .acct-drop{position:absolute;left:0;right:0;bottom:calc(100% + 10px);background:var(--sheet);border:1.5px solid var(--ink);border-radius:12px;box-shadow:5px 5px 0 var(--shadow);padding:14px;display:none;z-index:40}
 .acct-drop::after{content:"";position:absolute;top:100%;left:0;right:0;height:14px}
 .acct:hover .acct-drop,.acct:focus-within .acct-drop{display:block}
-.switch-row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#000}
+.drop-link{margin-top:12px;padding-top:10px;border-top:1.5px dashed var(--line);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#000}
+body[data-mode="dark"] .switch-row,body[data-mode="dark"] .drop-link,
+body[data-mode="blueprint"] .switch-row,body[data-mode="blueprint"] .drop-link{color:var(--ink)}
 .sw{width:42px;height:23px;border:1.5px solid var(--ink);border-radius:999px;position:relative;background:var(--sheet);cursor:pointer;flex-shrink:0}
 .sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--ink);transition:left .2s,background .2s}
 .sw.on{background:var(--accent)}
 .sw.on::after{left:21px;background:var(--sheet)}
-.drop-link{margin-top:12px;padding-top:10px;border-top:1.5px dashed var(--line);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
 .main{display:flex;flex-direction:column;min-width:0}
 .mast{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 4vw;border-bottom:1.5px solid var(--ink);flex-wrap:wrap}
@@ -110,6 +112,7 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 .panel .ph{padding:14px 20px;border-bottom:1.5px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline}
 .panel .ph .t{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
 .panel .ph .t b{color:var(--accent)}
+#v-stats .panel .ph .t:not(.readout){font-size:14px;font-weight:700;color:var(--ink)}
 .panel .pb{padding:20px;background:repeating-linear-gradient(0deg,transparent 0 27px,var(--rule) 27px 28px);background-position:0 0;border-radius:0 0 2px 2px}
 .btn{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;padding:14px 24px;border-radius:3px;cursor:pointer;border:2px solid var(--ink);transition:all .12s;display:inline-block;text-decoration:none}
 .btn.pri{background:var(--ink);color:var(--sheet);box-shadow:4px 4px 0 var(--accent)}
@@ -536,14 +539,14 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
         <div class="l">Current streak · best 34</div>
       </div>
       <div class="acct" id="acct">
-        <span class="avatar" id="acct-avatar">&rarr;</span>
-        <span class="acct-t" id="acct-name">Sign in</span>
+        <span class="avatar" id="acct-avatar"></span>
+        <span class="acct-t" id="acct-name">Settings</span>
         <div class="acct-drop">
           <div class="switch-row">
             <span>Dark mode</span>
             <button class="sw" id="darksw" role="switch" aria-checked="false" aria-label="Toggle dark mode"></button>
           </div>
-          <div class="drop-link" id="acct-link">Account &amp; settings &rarr;</div>
+          <div class="drop-link" id="acct-settings">Settings &rarr;</div>
         </div>
       </div>
     </div>
@@ -1124,32 +1127,23 @@ const mfetch=u=>fetch(u,{headers:MH}).then(r=>r.json());
    simulator (bluebook-practice-test.html#/login) owns sign-in/sign-up; the
    dashboard reuses the session supabase-js persists in localStorage. */
 const SBC=window.supabase.createClient(SUP,ANON);
-let UID=null,USER_EMAIL=null,USER_NAME=null;
+let UID=null,USER_EMAIL=null,USER_NAME=null,USER_AVATAR=null;
 function renderAcct(){
-  const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name'),lk=document.getElementById('acct-link'),chip=document.getElementById('acct');
-  if(!av||!nm||!lk||!chip)return;
-  if(UID){
-    const label=USER_NAME||USER_EMAIL||'account';
-    av.textContent=(label[0]||'a').toUpperCase();
-    nm.textContent=label.split('@')[0]+' · settings';
-    lk.textContent='Sign out →';
-    lk.onclick=async e=>{e.preventDefault();await SBC.auth.signOut();location.reload();};
-    chip.onclick=null;
-  }else{
-    av.textContent='→';
-    nm.textContent='Sign in';
-    lk.textContent='Sign in / create account →';
-    lk.onclick=()=>{location.href='bluebook-practice-test.html#/login';};
-    // the chip itself is the sign-in button — no need to aim for the
-    // drop-link inside the hover dropdown (which is also unreachable on touch)
-    chip.onclick=e=>{if(!e.target.closest('.acct-drop'))location.href='bluebook-practice-test.html#/login';};
-  }
+  const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name'),st=document.getElementById('acct-settings');
+  if(!av||!nm)return;
+  // no sign-in wiring — the chip is just the settings affordance; the
+  // dropdown always has the dark-mode toggle, plus a Settings row once signed in
+  const label=(USER_NAME||USER_EMAIL||'').split('@')[0];
+  if(USER_AVATAR){av.style.backgroundImage=`url("${USER_AVATAR}")`;av.textContent='';}
+  else{av.style.backgroundImage='';av.textContent=UID?(label[0]||'a').toUpperCase():'';}
+  nm.textContent=UID?label:'Settings';
+  if(st)st.style.display=UID?'block':'none';
 }
 const AUTH_READY=(async()=>{
   try{
     const{data}=await SBC.auth.getSession();
     const s=data.session;
-    if(s&&s.user){UID=s.user.id;USER_EMAIL=s.user.email;USER_NAME=(s.user.user_metadata&&(s.user.user_metadata.full_name||s.user.user_metadata.name))||null;MH.Authorization='Bearer '+s.access_token;}
+    if(s&&s.user){UID=s.user.id;USER_EMAIL=s.user.email;const md=s.user.user_metadata||{};USER_NAME=md.full_name||md.name||null;USER_AVATAR=md.avatar_url||md.picture||null;MH.Authorization='Bearer '+s.access_token;}
   }catch(e){}
   renderAcct();
   return UID;
