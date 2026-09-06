@@ -425,7 +425,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 #v-skills .panel .ph .t:first-child{font-size:15px;font-weight:800;color:#000;letter-spacing:.16em}
 #v-skills .panel .ph .t:first-child b{color:#000}
 body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"] #v-skills .panel .ph .t:first-child b{color:var(--ink)}
-.sksec-h{display:inline-block;font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--paper);background:var(--accent);border:2px solid var(--ink);border-radius:3px;padding:8px 16px;margin:0 0 14px;box-shadow:3px 3px 0 var(--ink)}
+.sksec-h{display:inline-block;font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);background:var(--note1);border:2px solid var(--ink);border-radius:3px;padding:8px 16px;margin:0 0 14px;box-shadow:3px 3px 0 var(--ink)}
 .sksec-div{border-top:1.5px dashed var(--line);margin:24px 0 22px}
 .skdom{margin-bottom:20px}
 .skdom .dl{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
@@ -591,7 +591,7 @@ body:not([data-view="today"]) .mast{display:none}
       <!-- ========= TODAY ========= -->
       <section class="view on" id="v-today">
         <div class="vh">
-          <h1><b id="greet">Good evening</b>, <em>Conan.</em></h1>
+          <h1><b id="greet">Good evening</b>, <em id="greet-name">friend.</em></h1>
         </div>
         <div class="stats4">
           <div class="stat" id="st-exam"><div class="l">Days till next exam</div><span class="v" id="st-exam-n">–</span><div class="d" id="st-exam-name">SAT</div></div>
@@ -1254,7 +1254,10 @@ function adoptUser(u,token){
   for(const i of(u.identities||[])){const d=i.identity_data||{};if(!USER_AVATAR)USER_AVATAR=d.avatar_url||d.picture||null;}
   if(token)MH.Authorization='Bearer '+token;
 }
+const niceName=()=>{const l=(USER_NAME||USER_EMAIL||'').split('@')[0];return l?l.charAt(0).toUpperCase()+l.slice(1):'';};
 function renderAcct(){
+  const gn=document.getElementById('greet-name');
+  if(gn)gn.textContent=(niceName()||'friend')+'.';
   const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name');
   if(!av||!nm)return;
   // no sign-in wiring — the chip is just the settings affordance; the
@@ -1769,7 +1772,7 @@ function chatBoot(){
   if(chatBooted)return;
   chatBooted=true;
   chatLoadSlugs();
-  typeCoach('Hey Conan \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.');
+  typeCoach('Hey '+(niceName()||'there')+' \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.');
   document.getElementById('chat-input').focus();
 }
 document.getElementById('chat-form').addEventListener('submit',async e=>{
