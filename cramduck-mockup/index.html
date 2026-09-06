@@ -40,13 +40,27 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 
 /* ============ SHELL ============ */
 .shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh;position:relative;z-index:2}
-@media(max-width:980px){.shell{grid-template-columns:1fr}.sidebar{position:static!important;width:auto!important;border-right:none!important;border-bottom:1.5px solid var(--ink);flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 4vw!important}.sidebar .nav{flex-direction:row!important;flex-wrap:wrap}.sidebar .side-foot{display:none}}
+@media(max-width:980px){.shell{grid-template-columns:1fr}.sidebar{position:static!important;width:auto!important;height:auto!important;border-right:none!important;border-bottom:1.5px solid var(--ink);flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 4vw!important}.sidebar .nav{flex-direction:row!important;flex-wrap:wrap;flex:0 0 auto;overflow:visible!important;mask-image:none!important;animation:none!important;margin:0}.sidebar .side-foot{display:none}}
 
 .sidebar{background:var(--side);border-right:1.5px solid var(--ink);padding:22px 18px;display:flex;flex-direction:column;gap:22px;transition:background .5s;position:sticky;top:0;height:100vh}
-.sb-brand{font-family:'Fraunces',serif;font-weight:900;font-size:26px;letter-spacing:-.01em}
+.sb-brand{font-family:'Fraunces',serif;font-weight:900;font-size:26px;letter-spacing:-.01em;flex-shrink:0}
 .sb-brand span{color:var(--accent)}
 .sb-brand small{display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-.nav{display:flex;flex-direction:column;gap:6px}
+@property --nav-fade-top{syntax:'<length>';initial-value:0px;inherits:false}
+@property --nav-fade-bot{syntax:'<length>';initial-value:0px;inherits:false}
+.nav{display:flex;flex-direction:column;gap:6px;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scroll-behavior:smooth;scrollbar-width:none;padding:0 4px;margin:0 -4px}
+.nav::-webkit-scrollbar{width:0;height:0}
+.nav.scrollable{mask-image:linear-gradient(to bottom,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%)}
+@supports (animation-timeline:scroll()){
+  .nav.scrollable{
+    mask-image:linear-gradient(to bottom,transparent 0,#000 var(--nav-fade-top),#000 calc(100% - var(--nav-fade-bot)),transparent 100%);
+    animation:nav-fade-top linear both,nav-fade-bot linear both;
+    animation-timeline:scroll(self);
+    animation-range:0 18px,calc(100% - 18px) 100%;
+  }
+}
+@keyframes nav-fade-top{from{--nav-fade-top:0px}to{--nav-fade-top:18px}}
+@keyframes nav-fade-bot{from{--nav-fade-bot:18px}to{--nav-fade-bot:0px}}
 .nav button{
   font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;text-align:left;width:100%;
   padding:11px 13px;border:1.5px solid transparent;border-radius:3px;background:transparent;color:var(--ink);cursor:pointer;
@@ -58,13 +72,7 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 .nav button:hover{border-color:var(--ink);color:var(--ink);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
 .nav button.on{background:var(--ink);color:var(--sheet);border-color:var(--ink);box-shadow:3px 3px 0 var(--accent)}
 .nav button .bdg{font-size:9px;padding:2px 6px;border:1px solid currentColor;border-radius:2px}
-.side-foot{margin-top:auto}
-.streak-card{position:relative;border:none;border-radius:2px;background:var(--note1);padding:22px 16px 16px;box-shadow:0 2px 3px rgba(0,0,0,.14),0 14px 26px -12px rgba(0,0,0,.4);transform:rotate(-1.6deg);transition:transform .2s}
-.streak-card:hover{transform:rotate(0) scale(1.03)}
-.streak-card::before{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(1.5deg);width:56px;height:17px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.15);clip-path:polygon(0 18%,4% 0,96% 0,100% 18%,100% 82%,96% 100%,4% 100%,0 82%)}
-.streak-card .n{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-.03em}
-.streak-card .n em{font-style:normal;font-weight:600;font-size:.55em;color:var(--accent)}
-.streak-card .l{font-family:'Caveat',cursive;font-size:17px;color:var(--muted);margin-top:6px}
+.side-foot{margin-top:auto;flex-shrink:0}
 .side-foot{display:flex;flex-direction:column;gap:16px}
 .acct{position:relative;display:flex;align-items:center;gap:10px;border:1.5px solid var(--ink);border-radius:999px;padding:9px 14px;background:var(--sheet);cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .15s,box-shadow .15s}
 .acct:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}
@@ -413,6 +421,11 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .skillmap i.m3{background:color-mix(in srgb,var(--accent) 70%,var(--sheet));border-color:transparent}
 .skillmap i.m4{background:var(--right);border-color:transparent}
 /* big skill heatmap */
+#v-skills .panel .ph .t:first-child{font-size:15px;font-weight:800;color:#000;letter-spacing:.16em}
+#v-skills .panel .ph .t:first-child b{color:#000}
+body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"] #v-skills .panel .ph .t:first-child b{color:var(--ink)}
+.sksec-h{font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);margin:0 0 14px}
+.sksec-div{border-top:1.5px dashed var(--line);margin:24px 0 22px}
 .skdom{margin-bottom:20px}
 .skdom .dl{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .skgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px}
@@ -480,14 +493,13 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .msg.coach ul,.msg.coach ol{margin:4px 0 8px 18px;padding:0}
 .msg.coach li{margin:2px 0}
 .msg.coach li::marker{color:var(--accent);font-weight:700}
-.mbody.typing::after{content:"\258D";color:var(--accent);margin-left:2px;animation:caret .9s steps(1) infinite}
-@keyframes caret{50%{opacity:0}}
+.mbody.typing:empty::after,.mbody.typing p:last-child::after,.mbody.typing ul:last-child li:last-child::after,.mbody.typing ol:last-child li:last-child::after{content:"\258D";color:var(--accent);margin-left:2px}
 .msg.coach code{font-family:'Space Mono',monospace;font-size:.85em;background:color-mix(in srgb,var(--ink) 7%,transparent);padding:1px 5px;border-radius:2px}
 .msg.coach .ch-h{font-weight:700}
 .msg.err{border-left-color:var(--wrong)}
 .msg.err .mbody{color:var(--wrong)}
-.chat-status{display:flex;align-items:center;gap:10px;padding:2px 2px 12px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.chat-status .chat-st-t{transition:opacity .18s}
+.msg.status{align-self:flex-start;display:flex;align-items:center;gap:11px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.msg.status .chat-st-t{transition:opacity .18s}
 .chat-dots{display:inline-flex;gap:4px}
 .chat-dots i{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:dotb 1.1s ease-in-out infinite}
 .chat-dots i:nth-child(2){animation-delay:.15s}
@@ -535,10 +547,6 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
       </div>
     </nav>
     <div class="side-foot">
-      <div class="streak-card">
-        <div class="n">12 <em>days</em></div>
-        <div class="l">Current streak · best 34</div>
-      </div>
       <div class="acct" id="acct">
         <span class="avatar" id="acct-avatar"></span>
         <span class="acct-t" id="acct-name">Settings</span>
@@ -608,7 +616,6 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
           <div class="ph"><span class="t">Coach <b>&middot; deepseek v4 flash</b></span></div>
           <div class="pb">
             <div class="chat-log" id="chat-log"></div>
-            <div class="chat-status" id="chat-status" style="display:none"><span class="chat-dots"><i></i><i></i><i></i></span><span class="chat-st-t" id="chat-status-t"></span></div>
             <form class="chat-in" id="chat-form">
               <input class="chat-field" id="chat-input" placeholder="ask about your weaknesses, your plan, anything&hellip;" autocomplete="off" maxlength="2000" />
               <button class="btn pri" type="submit" id="chat-send">Send &rarr;</button>
@@ -819,7 +826,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
           <div class="panel">
             <div class="ph"><span class="t">Combo drill <b>&middot; pick several</b></span><span class="t" id="skcount">0 SELECTED</span></div>
             <div class="pb">
-              <div class="skchips" id="skchips"></div>
+              <div id="skchips"></div>
               <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
                 <a class="btn pri" id="skcombo" href="#" target="_blank" rel="noopener">Practice combo &rarr;</a>
               </div>
@@ -880,6 +887,18 @@ function goView(name){
   if(name==='chat')chatBoot();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+
+/* sidebar nav — fade only when it actually overflows */
+(function(){
+  const nav=document.querySelector('.sidebar .nav');
+  if(!nav)return;
+  const upd=()=>nav.classList.toggle('scrollable',nav.scrollHeight>nav.clientHeight+1);
+  upd();
+  new ResizeObserver(upd).observe(nav);
+  nav.querySelectorAll('.navbox').forEach(b=>new ResizeObserver(upd).observe(b));
+  addEventListener('resize',upd);
+})();
+
 document.querySelectorAll('[data-goto]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();goView(a.dataset.goto)}));
 document.getElementById('start-session').addEventListener('click',e=>{e.preventDefault();goView('zen')});
 document.addEventListener('click',e=>{
@@ -1173,7 +1192,7 @@ document.addEventListener('click',e=>{
 const SUP='https://asnrquijopjjqfjvwalc.supabase.co';
 const ANON='sb_publishable_qg5QMNLb-D-BelY5G27kYA_UnZU0Hxh';
 const MH={apikey:ANON,Authorization:'Bearer '+ANON};
-const FIXED_KEY='looseleaf_fixed_mistakes';
+const FIXED_KEY='cramduck_fixed_mistakes';
 const mfetch=u=>fetch(u,{headers:MH}).then(r=>r.json());
 
 /* account — all student data is linked to the signed-in account. The
@@ -1361,8 +1380,11 @@ async function loadSkills(){
   const domains=tax.filter(n=>n.kind==='domain');
   const skills=tax.filter(n=>n.kind==='skill');
   const byDom={};for(const s of skills)(byDom[s.parent_code]??=byDom[s.parent_code]||[]).push(s);
-  // heatmap grouped by domain
-  heat.innerHTML=domains.map(d=>{
+  const isRW=c=>String(c||'').startsWith('SAT_RW');
+  const rwDoms=domains.filter(d=>isRW(d.code));
+  const mathDoms=domains.filter(d=>!isRW(d.code));
+  // heatmap grouped by domain, split into Reading & Writing (top) / Math (bottom)
+  const domBlock=ds=>ds.map(d=>{
     const list=byDom[d.code]||[];
     if(list.length===0)return '';
     return '<div class="skdom"><div class="dl">'+esc(skPretty(d.slug))+'</div><div class="skgrid">'+
@@ -1372,15 +1394,22 @@ async function loadSkills(){
         return '<div class="skcell m'+L+'" data-skill="'+esc(sk.slug)+'" title="'+esc(skPretty(sk.slug))+' \u00b7 '+pc+'"><span class="nm">'+esc(skPretty(sk.slug))+'</span><span class="pc">'+pc+'</span></div>';
       }).join('')+'</div></div>';
   }).join('');
-  // domain bars (attempt-weighted roll-up)
-  document.getElementById('skdombars').innerHTML=domains.map(d=>{
+  heat.innerHTML='<div class="sksec-h">Reading &amp; Writing</div>'+domBlock(rwDoms)+
+    '<div class="sksec-div"></div><div class="sksec-h">Math</div>'+domBlock(mathDoms);
+  // domain bars (attempt-weighted roll-up), split RW top / Math bottom
+  const barBlock=ds=>ds.map(d=>{
     let a=0,c=0;for(const sk of(byDom[d.code]||[])){const st=stats[sk.slug];if(st){a+=st.attempts;c+=st.correct;}}
     const pct=a?Math.round(c/a*100):0;
     return '<div class="row"><div class="t"><b>'+esc(skPretty(d.slug))+'</b><span>'+(a?pct+'% \u00b7 '+a:'no data')+'</span></div><div class="pbar'+(pct>=70?' g':'')+'"><i style="width:'+pct+'%"></i></div></div>';
-  }).join('')+'<p class="mnote" style="margin-top:6px">red cells are this week\u2019s plan \u2014 click one to drill it</p>';
-  // combo chips
+  }).join('');
+  document.getElementById('skdombars').innerHTML='<div class="sksec-h" style="margin-bottom:4px">Reading &amp; Writing</div>'+barBlock(rwDoms)+
+    '<div class="sksec-div"></div><div class="sksec-h" style="margin-bottom:4px">Math</div>'+barBlock(mathDoms)+
+    '<p class="mnote" style="margin-top:6px">red cells are this week\u2019s plan \u2014 click one to drill it</p>';
+  // combo chips, split RW top / Math bottom
   const chips=document.getElementById('skchips');
-  chips.innerHTML=skills.map(sk=>'<button class="skchip'+(SK_SEL.has(sk.slug)?' on':'')+'" data-skill="'+esc(sk.slug)+'">'+esc(skPretty(sk.slug))+'</button>').join('');
+  const chipBlock=sk2=>'<div class="skchips">'+sk2.map(sk=>'<button class="skchip'+(SK_SEL.has(sk.slug)?' on':'')+'" data-skill="'+esc(sk.slug)+'">'+esc(skPretty(sk.slug))+'</button>').join('')+'</div>';
+  chips.innerHTML='<div class="sksec-h">Reading &amp; Writing</div>'+chipBlock(skills.filter(sk=>isRW(sk.parent_code)))+
+    '<div class="sksec-div"></div><div class="sksec-h">Math</div>'+chipBlock(skills.filter(sk=>!isRW(sk.parent_code)));
   skUpdateCombo();
   heat.dataset.loaded='1';
 }
@@ -1625,17 +1654,24 @@ function chatContext(){
   if(chatSlugs&&Object.keys(chatSlugs).length)parts.push('available skill slugs: '+Object.keys(chatSlugs).join(', '));
   return parts.join('\n');
 }
+let chatStatusEl=null;
 function chatStatusStart(){
-  const box=document.getElementById('chat-status'),t=document.getElementById('chat-status-t');
-  box.style.display='flex';
+  chatStatusStop();
+  const d=document.createElement('div');
+  d.className='msg coach status';
+  d.innerHTML='<span class="chat-dots"><i></i><i></i><i></i></span><span class="chat-st-t"></span>';
+  chatLog.appendChild(d);
+  chatLog.scrollTop=chatLog.scrollHeight;
+  const t=d.querySelector('.chat-st-t');
   let i=Math.floor(Math.random()*CHAT_STATUSES.length);
   const tick=()=>{t.style.opacity=0;setTimeout(()=>{t.textContent=CHAT_STATUSES[i%CHAT_STATUSES.length]+'\u2026';t.style.opacity=1;i++;},180);};
   tick();
   chatStatusTimer=setInterval(tick,1900);
+  chatStatusEl=d;
 }
 function chatStatusStop(){
   clearInterval(chatStatusTimer);chatStatusTimer=null;
-  document.getElementById('chat-status').style.display='none';
+  if(chatStatusEl){chatStatusEl.remove();chatStatusEl=null;}
 }
 function chatBoot(){
   if(chatBooted)return;

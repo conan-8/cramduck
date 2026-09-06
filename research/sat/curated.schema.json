@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://study-maste/research/sat/curated.schema.json",
+  "$id": "https://cramduck/research/sat/curated.schema.json",
   "title": "Curated SAT Question (display-ready)",
   "description": "Human-curated, display-ready record for one Digital SAT question. Fields map 1:1 to simulator regions: info = left pane, prompt = text above the answer options, options/gridAnswer = answer area, diagram = standalone figure PNG. Metadata (origin/domain/skill/difficulty) is joined from the harvested bank by sourceId at import time. Internal_eval only.",
   "type": "object",

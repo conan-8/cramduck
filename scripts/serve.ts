@@ -4,7 +4,7 @@
  *   npm run serve                  -> http://127.0.0.1:4173
  *   PORT=8080 npm run serve        -> http://127.0.0.1:8080
  *
- * Serves looseleaf-mockup/ as THE app: landing at /landing.html, app mockup
+ * Serves cramduck-mockup/ as THE app: landing at /landing.html, app mockup
  * at / (index.html), built Bluebook simulator at /bluebook-practice-test.html.
  * '/' resolves to index.html, directory paths get their index.html, path
  * traversal is refused, anything else missing is a plain 404. Exit 0.
@@ -23,7 +23,7 @@ import path from 'node:path';
 import { REPO_ROOT } from './lib/validate.js';
 import { handleChat } from './lib/chat-proxy.js';
 
-const ROOT = path.join(REPO_ROOT, 'looseleaf-mockup');
+const ROOT = path.join(REPO_ROOT, 'cramduck-mockup');
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.PORT || 4173);
 
@@ -257,7 +257,7 @@ const server = http.createServer((req, res) => {
   }
 
   const filePath = path.normalize(path.join(ROOT, pathname));
-  // Path traversal guard: stay inside looseleaf-mockup/.
+  // Path traversal guard: stay inside cramduck-mockup/.
   if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) {
     send(res, 403, 'forbidden\n');
     console.log(`${method} ${requestUri} 403`);
@@ -295,5 +295,5 @@ if (!Number.isInteger(PORT) || PORT <= 0 || PORT > 65535) {
 }
 
 server.listen(PORT, HOST, () => {
-  console.log(`serving looseleaf-mockup/ at http://${HOST}:${PORT}`);
+  console.log(`serving cramduck-mockup/ at http://${HOST}:${PORT}`);
 });

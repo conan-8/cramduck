@@ -1,5 +1,5 @@
 -- 005_dev_student_events.sql — dev-only anon read/write on student_events so the
--- local simulator + zen mode can record answers and the looseleaf dashboard can
+-- local simulator + zen mode can record answers and the Cramduck dashboard can
 -- read them back. Fixed student_id 'dev' keeps the blast radius tiny.
 --
 -- PRE-LAUNCH TODO: drop this policy; replace with owner-scoped auth policies

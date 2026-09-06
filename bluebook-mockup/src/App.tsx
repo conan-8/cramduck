@@ -10,7 +10,7 @@ import Review from './pages/Review'
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   // If this page was reached signed-out (or mid-OAuth-callback), a successful
-  // sign-in should hand off to the dashboard (the looseleaf hub at the origin
+  // sign-in should hand off to the dashboard (the Cramduck hub at the origin
   // root) instead of silently revealing whatever simulator view the user
   // landed on.
   const signedOutAtLoad = useRef(
@@ -41,7 +41,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
  * to bluebook-practice-test.html#access_token=…, which matches no route, so
  * neither Login nor RequireAuth would ever mount to hand off. Once the client
  * has parsed the session out of the URL, send the user to the dashboard (the
- * looseleaf hub at the origin root). Signed-out: show the login card.
+ * Cramduck hub at the origin root). Signed-out: show the login card.
  */
 function OAuthHandoff() {
   const { user, loading } = useAuth()

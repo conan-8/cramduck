@@ -1,4 +1,4 @@
--- 001_init.sql — initial studyMaste schema. Idempotent: safe to re-run.
+-- 001_init.sql — initial Cramduck schema. Idempotent: safe to re-run.
 
 CREATE TABLE IF NOT EXISTS subjects (
   code        TEXT PRIMARY KEY,

@@ -37,7 +37,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  // Once signed in, hand off to the dashboard (the looseleaf hub at the
+  // Once signed in, hand off to the dashboard (the Cramduck hub at the
   // origin root) — it reads the same Supabase session from localStorage.
   useEffect(() => {
     if (user) window.location.href = `${window.location.origin}/`

@@ -33,10 +33,10 @@ review-gallery/
 # browser bundle (regenerate with npm run build:sim)
 bluebook-mockup/public/renderers.js
 
-# looseleaf app build artifacts (regenerate with npm run build:app)
-looseleaf-mockup/assets/
-looseleaf-mockup/renderers.js
-looseleaf-mockup/bluebook-practice-test.html
+# Cramduck app build artifacts (regenerate with npm run build:app)
+cramduck-mockup/assets/
+cramduck-mockup/renderers.js
+cramduck-mockup/bluebook-practice-test.html
 
 # eval run artifacts (regenerate with npm run eval:generator)
 src/generator/eval/report-last-run.json

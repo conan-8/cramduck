@@ -1,5 +1,5 @@
 /**
- * chat-proxy: shared backend for the Looseleaf coach chat (/api/chat).
+ * chat-proxy: shared backend for the Cramduck coach chat (/api/chat).
  *
  * Used by both runtimes:
  *   - Vercel serverless function (api/chat.ts)
@@ -21,7 +21,7 @@ const MAX_CONTENT = 8000;
 const MAX_CONTEXT = 2000;
 
 const SYSTEM_PROMPT = [
-  'You are the study coach inside Looseleaf, a paper-and-ink study app for a high-school student preparing for the SAT (Sept 12, 2026).',
+  'You are the study coach inside Cramduck, a paper-and-ink study app for a high-school student preparing for the SAT (Sept 12, 2026).',
   "When a student-record snapshot is provided, ground your answers in it: reference the student's actual weakest skills, streak and open mistakes instead of generic advice.",
   'The student asks about weaknesses, study plans, drills, motivation and test strategy. Be warm, candid and specific; keep replies tight (a few short paragraphs or bullets), plain text with light markdown (bullets, **bold**).',
   'Never invent results the record does not contain — if there is no data yet, say so and suggest how to get some (a zen run or a sim).',

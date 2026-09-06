@@ -1,16 +1,16 @@
 /**
  * sync-app: mirrors the built Bluebook simulator (bluebook-mockup/dist/) and
- * the harvested figure PNGs into looseleaf-mockup/ so the looseleaf mockup
+ * the harvested figure PNGs into cramduck-mockup/ so the Cramduck mockup
  * can be served as the one app (see scripts/serve.ts):
  *
- *   bluebook-mockup/dist/index.html    -> looseleaf-mockup/bluebook-practice-test.html
- *   bluebook-mockup/dist/renderers.js  -> looseleaf-mockup/renderers.js
- *   bluebook-mockup/dist/assets/*      -> looseleaf-mockup/assets/
- *   research/sat/assets/ssqb-*.png     -> looseleaf-mockup/assets/
+ *   bluebook-mockup/dist/index.html    -> cramduck-mockup/bluebook-practice-test.html
+ *   bluebook-mockup/dist/renderers.js  -> cramduck-mockup/renderers.js
+ *   bluebook-mockup/dist/assets/*      -> cramduck-mockup/assets/
+ *   research/sat/assets/ssqb-*.png     -> cramduck-mockup/assets/
  *
  *   tsx scripts/sync-app.ts        (normally via: npm run build:app)
  *
- * Stale hashed bundles in looseleaf-mockup/assets/ — files not present in
+ * Stale hashed bundles in cramduck-mockup/assets/ — files not present in
  * bluebook-mockup/dist/assets/ and not matching /^ssqb-.+\.png$/ — are
  * deleted (names printed). A destination file that already matches the
  * source on size AND mtime is skipped; otherwise it is (re)copied and the
@@ -25,7 +25,7 @@ import path from 'node:path';
 import { REPO_ROOT } from './lib/validate.js';
 
 const DIST_DIR = path.join(REPO_ROOT, 'bluebook-mockup', 'dist');
-const DEST_DIR = path.join(REPO_ROOT, 'looseleaf-mockup');
+const DEST_DIR = path.join(REPO_ROOT, 'cramduck-mockup');
 const DEST_ASSETS_DIR = path.join(DEST_DIR, 'assets');
 const SSQB_SRC_DIR = path.join(REPO_ROOT, 'research', 'sat', 'assets');
 
@@ -73,11 +73,11 @@ function main(): void {
 
   // Step 1: built simulator page -> bluebook-practice-test.html
   const htmlCopied = copyIfChanged(path.join(DIST_DIR, 'index.html'), path.join(DEST_DIR, 'bluebook-practice-test.html'));
-  console.log(`sync-app: dist/index.html -> looseleaf-mockup/bluebook-practice-test.html (${htmlCopied ? 'copied' : 'unchanged'})`);
+  console.log(`sync-app: dist/index.html -> cramduck-mockup/bluebook-practice-test.html (${htmlCopied ? 'copied' : 'unchanged'})`);
 
   // Step 2: renderer bundle
   const renderersCopied = copyIfChanged(path.join(DIST_DIR, 'renderers.js'), path.join(DEST_DIR, 'renderers.js'));
-  console.log(`sync-app: dist/renderers.js -> looseleaf-mockup/renderers.js (${renderersCopied ? 'copied' : 'unchanged'})`);
+  console.log(`sync-app: dist/renderers.js -> cramduck-mockup/renderers.js (${renderersCopied ? 'copied' : 'unchanged'})`);
 
   // Step 3: mirror dist/assets/
   const distAssetNames = fileNames(path.join(DIST_DIR, 'assets'));
@@ -87,7 +87,7 @@ function main(): void {
     if (copyIfChanged(path.join(DIST_DIR, 'assets', name), path.join(DEST_ASSETS_DIR, name))) assetsCopied++;
     else assetsSkipped++;
   }
-  console.log(`sync-app: dist/assets/ -> looseleaf-mockup/assets/ (${distAssetNames.length} file(s) scanned, copied ${assetsCopied}, skipped ${assetsSkipped})`);
+  console.log(`sync-app: dist/assets/ -> cramduck-mockup/assets/ (${distAssetNames.length} file(s) scanned, copied ${assetsCopied}, skipped ${assetsSkipped})`);
 
   // Step 4: delete stale hashed bundles (not in dist/assets, not ssqb PNGs)
   const fresh = new Set(distAssetNames);
@@ -97,7 +97,7 @@ function main(): void {
     fs.unlinkSync(path.join(DEST_ASSETS_DIR, name));
     deleted.push(name);
   }
-  for (const name of deleted) console.log(`deleted stale: looseleaf-mockup/assets/${name}`);
+  for (const name of deleted) console.log(`deleted stale: cramduck-mockup/assets/${name}`);
   console.log(`sync-app: stale bundle cleanup (deleted ${deleted.length})`);
 
   // Step 5: mirror harvested ssqb figure PNGs
@@ -130,7 +130,7 @@ function main(): void {
     if (copyIfChanged(path.join(SSQB_SRC_DIR, name), dest)) ssqbCopied++;
     else ssqbSkipped++;
   }
-  console.log(`sync-app: ${ssqbSrcRel}/ ssqb-*.png -> looseleaf-mockup/assets/ (${ssqbNames.length} source PNG(s) scanned, copied ${ssqbCopied}, skipped ${ssqbSkipped})`);
+  console.log(`sync-app: ${ssqbSrcRel}/ ssqb-*.png -> cramduck-mockup/assets/ (${ssqbNames.length} source PNG(s) scanned, copied ${ssqbCopied}, skipped ${ssqbSkipped})`);
 }
 
 main();

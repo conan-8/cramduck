@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://study-maste/research/sat/question.schema.json",
+  "$id": "https://cramduck/research/sat/question.schema.json",
   "title": "Normalized SAT Question",
   "description": "Normalized contract for one harvested Digital SAT question (internal_eval only).",
   "type": "object",
