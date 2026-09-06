@@ -113,7 +113,9 @@ body[data-mode="blueprint"] .switch-row,body[data-mode="blueprint"] .drop-link{c
 .panel .ph .t{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
 .panel .ph .t b{color:var(--accent)}
 #v-stats .panel .ph .t:not(.readout){font-size:14px;font-weight:700;color:var(--ink)}
+#v-stats .panel .ph .t.big:not(.readout){font-size:18px}
 .panel .pb{padding:20px;background:repeating-linear-gradient(0deg,transparent 0 27px,var(--rule) 27px 28px);background-position:0 0;border-radius:0 0 2px 2px}
+.panel .pb.plain{background:none}
 .btn{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;padding:14px 24px;border-radius:3px;cursor:pointer;border:2px solid var(--ink);transition:all .12s;display:inline-block;text-decoration:none}
 .btn.pri{background:var(--ink);color:var(--sheet);box-shadow:4px 4px 0 var(--accent)}
 .btn.sec{background:transparent;color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
@@ -279,7 +281,6 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .bc-y{display:flex;flex-direction:column;justify-content:space-between;height:150px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);text-align:right;min-width:26px}
 .bc-main{flex:1;min-width:0}
 .bc-plot{display:flex;align-items:flex-end;gap:6px;height:150px;border-left:1.5px solid var(--line);border-bottom:1.5px solid var(--ink);padding:0 4px;position:relative}
-.bc-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 calc(25% - 1px),var(--rule) calc(25% - 1px) 25%);pointer-events:none}
 .bc-col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative;z-index:1}
 .bc-bar{width:100%;border:1.5px solid var(--ink);border-bottom:none;border-radius:2px 2px 0 0;background:repeating-linear-gradient(-45deg,var(--accent) 0 6px,color-mix(in srgb,var(--accent) 45%,transparent) 6px 12px);min-height:2px;transition:filter .15s}
 .bc-col:hover .bc-bar{filter:brightness(1.25)}
@@ -526,7 +527,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
         <button data-view="zen">Zen mode</button>
         <button data-view="sim">Simulator <span class="bdg">NEW</span></button>
         <button data-view="skills">Mastery</button>
-        <button data-view="mistakes">Mistakes + Saved <span class="bdg">9</span></button>
+        <button data-view="mistakes">Mistakes + Saved <span class="bdg" id="nav-mbdg" style="display:none"></span></button>
       </div>
       <div class="navbox">
         <div class="nb-t">Social</div>
@@ -657,10 +658,10 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
         </div>
         <div class="grid2">
           <div class="panel">
-            <div class="ph"><span class="t">Reviews per day</span><span class="t readout" id="rev-readout">hover a bar</span></div>
-            <div class="pb"><div class="bc" id="revchart"></div></div>
-            <div class="ph" style="border-top:1.5px dashed var(--line)"><span class="t">Questions done</span><span class="t readout" id="q-readout">hover a bar</span></div>
-            <div class="pb"><div class="bc" id="qchart"></div></div>
+            <div class="ph"><span class="t big">Reviews per day</span><span class="t readout" id="rev-readout">hover a bar</span></div>
+            <div class="pb plain"><div class="bc" id="revchart"></div></div>
+            <div class="ph" style="border-top:1.5px dashed var(--line)"><span class="t big">Questions done</span><span class="t readout" id="q-readout">hover a bar</span></div>
+            <div class="pb plain"><div class="bc" id="qchart"></div></div>
           </div>
           <div class="panel">
             <div class="ph"><span class="t">Accuracy by skill</span></div>
@@ -771,65 +772,10 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
           </div>
 
           <div class="zc-label" style="margin:34px 0 12px">Past sessions</div>
-          <div class="simrecs">
-            <div class="simrec">
-              <div class="sr-main">
-                <span class="sr-st done">PRACTICE TEST #1 &middot; COMPLETED</span>
-                <h3>Digital SAT &mdash; Full Length</h3>
-                <div class="sr-meta">SEP 1 &middot; 2H 14M &middot; 98 QUESTIONS</div>
-                <div class="mods"><i class="done">R&amp;W M1</i><i class="done">R&amp;W M2</i><i class="done">MATH M1</i><i class="done">MATH M2</i></div>
-              </div>
-              <div class="sr-score">1400<small> /1600</small></div>
-              <button class="btn sec sm" data-report="score-report">View report &darr;</button>
-            </div>
-            <div class="simrec">
-              <div class="sr-main">
-                <span class="sr-st">PRACTICE TEST #2 &middot; FRESH</span>
-                <h3>Digital SAT &mdash; Full Length</h3>
-                <div class="sr-meta">NOT STARTED &middot; 2H 14M &middot; 98 QUESTIONS</div>
-                <div class="mods"><i>R&amp;W M1</i><i>R&amp;W M2</i><i>MATH M1</i><i>MATH M2</i></div>
-              </div>
-              <div class="sr-score none">&mdash;</div>
-              <button class="btn sec sm" data-launch="bluebook-practice-test.html">Launch &#8599;</button>
-            </div>
-            <div class="simrec">
-              <div class="sr-main">
-                <span class="sr-st done">SECTION SPRINT &middot; COMPLETED</span>
-                <h3>Math only &mdash; module sprint</h3>
-                <div class="sr-meta">AUG 27 &middot; 35 MIN &middot; 22 QUESTIONS</div>
-                <div class="mods"><i class="done">ALGEBRA</i><i class="done">ADV. MATH</i><i class="done">PSDA</i><i class="done">GEO/TRIG</i></div>
-              </div>
-              <div class="sr-score">640<small> /800</small></div>
-              <button class="btn sec sm" data-report="score-report">View report &darr;</button>
-            </div>
-          </div>
-          <div class="panel" id="score-report">
-            <div class="ph"><span class="t">SCORE REPORT <b>&middot; PRACTICE TEST #1</b></span><span class="t">SEPT 1 &middot; SCORED</span></div>
-            <div class="pb">
-              <div class="scorewrap">
-                <div class="bignum">1400<small> /1600</small></div>
-                <div style="flex:1;min-width:270px">
-                  <div class="secrow"><span class="sl">READING &amp; WRITING</span><div class="secbar"><i style="width:88.7%"></i></div><span class="sv">710</span></div>
-                  <div class="secrow"><span class="sl">MATH</span><div class="secbar"><i style="width:86.2%"></i></div><span class="sv">690</span></div>
-                  <p class="mnote" style="margin-top:10px">+60 over last month's 1340 &mdash; math is catching up</p>
-                </div>
-              </div>
-              <div class="mono" style="font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px">Domain breakdown</div>
-              <div class="domgrid">
-                <div class="dom"><div class="dn">Craft &amp; Structure</div><div class="dv">78%</div><div class="db"><i style="width:78%;background:var(--right)"></i></div><div class="dd">+6 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Information &amp; Ideas</div><div class="dv">84%</div><div class="db"><i style="width:84%;background:var(--right)"></i></div><div class="dd">+2 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Std. English Conventions</div><div class="dv">91%</div><div class="db"><i style="width:91%;background:var(--right)"></i></div><div class="dd">+1 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Expression of Ideas</div><div class="dv">72%</div><div class="db"><i style="width:72%;background:var(--accent)"></i></div><div class="dd">+4 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Algebra</div><div class="dv">62%</div><div class="db"><i style="width:62%;background:var(--wrong)"></i></div><div class="dd down">&minus;3 &middot; DRILLS SCHEDULED</div></div>
-                <div class="dom"><div class="dn">Advanced Math</div><div class="dv">68%</div><div class="db"><i style="width:68%;background:var(--accent)"></i></div><div class="dd">+2 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Problem Solving &amp; Data</div><div class="dv">75%</div><div class="db"><i style="width:75%;background:var(--right)"></i></div><div class="dd">+5 THIS MONTH</div></div>
-                <div class="dom"><div class="dn">Geometry &amp; Trig</div><div class="dv">81%</div><div class="db"><i style="width:81%;background:var(--right)"></i></div><div class="dd">+2 THIS MONTH</div></div>
-              </div>
-              <div style="display:flex;gap:14px;margin-top:28px;flex-wrap:wrap">
-                <a class="btn pri" href="#" data-goto="mistakes">Review 14 mistakes &rarr;</a>
-                <a class="btn sec" href="bluebook-practice-test.html" target="_blank" rel="noopener">Launch simulator &#8599;</a>
-              </div>
-            </div>
+          <div class="simrecs" id="simrecs"></div>
+          <div class="panel" id="score-report" style="display:none">
+            <div class="ph"><span class="t" id="sr-title">SCORE REPORT</span><span class="t" id="sr-when"></span></div>
+            <div class="pb" id="sr-body"></div>
           </div>
         </div>
 
@@ -841,16 +787,12 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
           <h1>Mistakes <em>&amp; saved</em></h1>
           <span class="sub">AUTO-COLLECTED FROM SIM + PRACTICE &middot; <b id="mcount">0</b> OPEN &middot; <b id="mfixed">0</b> FIXED</span>
         </div>
-        <div class="mtabs"><button class="zp on" data-mt="m" id="mtab-m">MISTAKES &middot; 0</button><button class="zp" data-mt="s">SAVED &middot; 5</button></div>
+        <div class="mtabs"><button class="zp on" data-mt="m" id="mtab-m">MISTAKES &middot; 0</button><button class="zp" data-mt="s" id="mtab-s">SAVED &middot; 0</button></div>
         <div class="panel">
           <div class="ph"><span class="t" id="m-title">OPEN MISTAKES <b>&middot; NEWEST FIRST</b></span><span class="t">HOVER A ROW</span></div>
           <div class="pb">
             <div id="mlist"><p class="mnote" style="max-width:420px">loading your mistakes&hellip;</p></div>
-            <div class="mrow" data-k="s" style="display:none"><div class="mq">Elegant two-step systems problem &mdash; good warmup<small>SAVED FROM SAT SIM &middot; ALGEBRA</small></div><span class="mtag">SAVED</span><div class="mact"><button class="mini retry">OPEN</button></div></div>
-            <div class="mrow" data-k="s" style="display:none"><div class="mq">Rhetorical synthesis done perfectly &mdash; reuse the approach<small>SAVED FROM SAT SIM &middot; EXPRESSION OF IDEAS</small></div><span class="mtag">SAVED</span><div class="mact"><button class="mini retry">OPEN</button></div></div>
-            <div class="mrow" data-k="s" style="display:none"><div class="mq">Krebs cycle diagram question<small>SAVED FROM PRACTICE &middot; BIOLOGY</small></div><span class="mtag">SAVED</span><div class="mact"><button class="mini retry">OPEN</button></div></div>
-            <div class="mrow" data-k="s" style="display:none"><div class="mq">Tricky unit-circle trig in degrees<small>SAVED FROM SAT SIM &middot; GEOMETRY &amp; TRIG</small></div><span class="mtag">SAVED</span><div class="mact"><button class="mini retry">OPEN</button></div></div>
-            <div class="mrow" data-k="s" style="display:none"><div class="mq">&ldquo;Mitochondria = batteries&rdquo; &mdash; my own analogy, keep it<small>SAVED FROM MARGIN NOTES</small></div><span class="mtag">NOTE</span><div class="mact"><button class="mini retry">OPEN</button></div></div>
+            <div id="slist" style="display:none"></div>
           </div>
         </div>
         <p class="mnote" style="margin-top:20px;max-width:440px">marking one fixed re-queues it in 3 days &mdash; to make sure it actually stuck</p>
@@ -931,6 +873,7 @@ function goView(name){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
   document.querySelector('.content').scrollTo?.(0,0); window.scrollTo(0,0);
   if(name==='mistakes')loadMistakes();
+  if(name==='sim')loadSim();
   if(name==='skills')loadSkills();
   if(name==='today')loadToday();
   if(name==='stats')loadStats();
@@ -970,7 +913,7 @@ function sBarChart(containerId,readoutId,labels,values,unit){
     xs+='<span>'+labels[i]+'</span>';
   }
   el.innerHTML='<div class="bc-y"><span>'+max+'</span><span>'+mid+'</span><span>0</span></div>'+
-    '<div class="bc-main"><div class="bc-plot"><div class="bc-grid"></div>'+bars+'</div><div class="bc-xrow">'+xs+'</div></div>';
+    '<div class="bc-main"><div class="bc-plot">'+bars+'</div><div class="bc-xrow">'+xs+'</div></div>';
   const ro=document.getElementById(readoutId);
   el.querySelectorAll('.bc-col').forEach(c=>{
     const i=+c.dataset.i;
@@ -1110,11 +1053,121 @@ document.querySelectorAll('[data-sc]').forEach(b=>b.addEventListener('click',()=
 document.getElementById('sim-start').addEventListener('click',()=>{
   window.open('bluebook-practice-test.html'+(SC==='full'?'':'?focus='+encodeURIComponent(SC)),'_blank');
 });
-document.querySelectorAll('.simrec [data-launch]').forEach(b=>b.addEventListener('click',()=>window.open(b.dataset.launch,'_blank')));
-document.querySelectorAll('.simrec [data-report]').forEach(b=>b.addEventListener('click',()=>{
-  const r=document.getElementById(b.dataset.report);
-  if(r)r.scrollIntoView({behavior:'smooth',block:'start'});
-}));
+/* past sessions + score report — sessionized from student_events: a run
+   breaks on a 60+ min gap or a mode switch; every number is graded from
+   the recorded answers, nothing invented */
+const SIM_GAP=60*60000;
+let SIM_SESSIONS=[],SIM_MAP={},SIM_SEL=-1;
+const SIM_MODE={exam:'TIMED RUN',practice:'ZEN MODE',diagnostic:'DIAGNOSTIC'};
+const SIM_TITLE={exam:'Digital SAT \u2014 timed run',practice:'Zen mode \u2014 practice stream',diagnostic:'Diagnostic \u2014 placement run'};
+function simStats(s){
+  const out={a:0,c:0,time:0,sec:{},skill:{}};
+  for(const e of s.evts){
+    out.a++;if(e.correct)out.c++;
+    out.time+=e.time_ms||0;
+    const m=SIM_MAP[e.question_id]||{};
+    if(m.section){const o=out.sec[m.section]??=out.sec[m.section]||{a:0,c:0};o.a++;if(e.correct)o.c++;}
+    if(m.skill){const o=out.skill[m.skill]??=out.skill[m.skill]||{a:0,c:0};o.a++;if(e.correct)o.c++;}
+  }
+  out.acc=out.a?Math.round(out.c/out.a*100):0;
+  return out;
+}
+const simDur=t=>{if(t<60000)return Math.max(1,Math.round(t/1000))+' SEC';const m=Math.round(t/60000);return m>=60?Math.floor(m/60)+'H '+(m%60)+'M':m+' MIN';};
+async function loadSim(){
+  await AUTH_READY;
+  const recs=document.getElementById('simrecs'),rep=document.getElementById('score-report');
+  if(!UID){recs.innerHTML=signInNote();rep.style.display='none';return;}
+  if(!recs.dataset.loaded)recs.innerHTML='<p class="mnote" style="max-width:420px">loading your runs\u2026</p>';
+  let evts=[];
+  try{evts=await mfetch(SUP+'/rest/v1/student_events?student_id=eq.'+UID+'&order=occurred_at.asc&select=question_id,correct,mode,time_ms,occurred_at');}catch(e){}
+  if(!Array.isArray(evts))evts=[];
+  const sessions=[];
+  for(const e of evts){
+    const t=new Date(e.occurred_at).getTime();
+    let s=sessions[sessions.length-1];
+    if(!s||t-s.end>SIM_GAP||s.mode!==e.mode){s={mode:e.mode,start:t,end:t,evts:[]};sessions.push(s);}
+    s.end=t;s.evts.push(e);
+  }
+  SIM_SESSIONS=sessions;
+  const ids=[...new Set(evts.map(e=>e.question_id))];
+  SIM_MAP={};
+  if(ids.length){
+    const enc=ids.map(i=>encodeURIComponent(i)).join(',');
+    let gen=[],harv=[];
+    try{
+      [gen,harv]=await Promise.all([
+        mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
+        mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,section,payload'),
+      ]);
+    }catch(e){}
+    for(const r of(gen||[])){
+      const subj=r.payload.subjectCode||(r.payload.taxonomyCode||'').split(':')[0];
+      SIM_MAP[r.question_id]={skill:(r.payload.taxonomyCode||'').split(':')[1],section:subj==='SAT_RW'?'rw':'math'};
+    }
+    for(const r of(harv||[]))SIM_MAP[r.source_id]={skill:r.payload.curated?.skill??r.payload.skill,section:(r.section||'').indexOf('math')===0?'math':'rw'};
+  }
+  if(sessions.length===0){
+    recs.innerHTML='<p class="mnote" style="max-width:460px">no runs yet \u2014 launch one above and it lands here, scored from your actual answers</p>';
+    rep.style.display='none';recs.dataset.loaded='1';return;
+  }
+  recs.innerHTML=sessions.map((s,i)=>{
+    const st=simStats(s);
+    const chips=['math','rw'].filter(k=>st.sec[k]).map(k=>'<i class="done">'+(k==='math'?'MATH':'R&amp;W')+' \u00b7 '+st.sec[k].a+'</i>').join('');
+    return '<div class="simrec"><div class="sr-main"><span class="sr-st done">'+SIM_MODE[s.mode]+' \u00b7 COMPLETED</span>'+
+      '<h3>'+esc(SIM_TITLE[s.mode])+'</h3>'+
+      '<div class="sr-meta">'+fmtDate(new Date(s.start).toISOString())+' \u00b7 '+simDur(st.time)+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+'</div>'+
+      '<div class="mods">'+chips+'</div></div>'+
+      '<div class="sr-score">'+st.acc+'<small>% \u00b7 '+st.c+'/'+st.a+'</small></div>'+
+      '<button class="btn sec sm" data-simrep="'+i+'">View report \u2193</button></div>';
+  }).reverse().join('');
+  recs.dataset.loaded='1';
+  simReport(SIM_SEL>=0&&SIM_SEL<sessions.length?SIM_SEL:sessions.length-1);
+}
+function simReport(i){
+  const s=SIM_SESSIONS[i];if(!s)return;
+  SIM_SEL=i;
+  const rep=document.getElementById('score-report');rep.style.display='';
+  const st=simStats(s);
+  document.getElementById('sr-title').innerHTML='SCORE REPORT <b>\u00b7 RUN '+(i+1)+' OF '+SIM_SESSIONS.length+'</b>';
+  document.getElementById('sr-when').textContent=fmtDate(new Date(s.start).toISOString())+' \u00b7 '+SIM_MODE[s.mode]+' \u00b7 GRADED FROM YOUR ANSWERS';
+  const prev=i>0?simStats(SIM_SESSIONS[i-1]):null;
+  const priorSkill={};
+  for(const s2 of SIM_SESSIONS.slice(0,i))for(const e of s2.evts){
+    const sk=(SIM_MAP[e.question_id]||{}).skill;if(!sk)continue;
+    const o=priorSkill[sk]??=priorSkill[sk]||{a:0,c:0};o.a++;if(e.correct)o.c++;
+  }
+  const secs=['rw','math'].filter(k=>st.sec[k]).map(k=>{
+    const o=st.sec[k],pct=Math.round(o.c/o.a*100);
+    return '<div class="secrow"><span class="sl">'+(k==='rw'?'READING &amp; WRITING':'MATH')+'</span><div class="secbar"><i style="width:'+pct+'%"></i></div><span class="sv">'+pct+'%</span></div>';
+  }).join('');
+  const note=prev
+    ?(st.acc-prev.acc>=0?'+':'')+(st.acc-prev.acc)+' pts vs your previous run \u2014 '+(st.acc>=prev.acc?'trending up':'shake it off next run')
+    :'first run on record \u2014 this is the baseline everything else gets measured against';
+  const doms=Object.entries(st.skill).map(([sk,o])=>{
+    const pct=Math.round(o.c/o.a*100);
+    const col=pct>=85?'var(--right)':pct>=70?'var(--accent)':'var(--wrong)';
+    const pr=priorSkill[sk];
+    const dd=pr
+      ?(()=>{const d=pct-Math.round(pr.c/pr.a*100);return '<div class="dd'+(d<0?' down':'')+'">'+(d>=0?'+':'\u2212')+Math.abs(d)+' VS PRIOR</div>';})()
+      :'<div class="dd" style="color:var(--muted)">FIRST LOOK \u00b7 '+o.a+' Q'+(o.a===1?'':'S')+'</div>';
+    return '<div class="dom"><div class="dn">'+esc(skPretty(sk))+'</div><div class="dv">'+pct+'%</div><div class="db"><i style="width:'+pct+'%;background:'+col+'"></i></div>'+dd+'</div>';
+  }).join('');
+  const wrong=st.a-st.c;
+  document.getElementById('sr-body').innerHTML=
+    '<div class="scorewrap"><div class="bignum">'+st.acc+'<small>% correct</small></div>'+
+    '<div style="flex:1;min-width:270px">'+secs+'<p class="mnote" style="margin-top:10px">'+esc(note)+'</p></div></div>'+
+    '<div class="mono" style="font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px">Domain breakdown</div>'+
+    (doms?'<div class="domgrid">'+doms+'</div>':'<p class="mnote">no skill mapping for these questions yet</p>')+
+    '<div style="display:flex;gap:14px;margin-top:28px;flex-wrap:wrap">'+
+    (wrong>0?'<a class="btn pri" href="#" data-simmistakes>Review '+wrong+' mistake'+(wrong===1?'':'s')+' \u2192</a>':'<span class="chipx">CLEAN RUN \u00b7 NO MISSES</span>')+
+    '<a class="btn sec" href="bluebook-practice-test.html" target="_blank" rel="noopener">Launch simulator \u2197</a></div>';
+}
+document.addEventListener('click',e=>{
+  const rb=e.target.closest('[data-simrep]');
+  if(rb){simReport(+rb.dataset.simrep);document.getElementById('score-report').scrollIntoView({behavior:'smooth',block:'start'});return;}
+  const mb=e.target.closest('[data-simmistakes]');
+  if(mb){e.preventDefault();goView('mistakes');}
+});
 
 /* mistakes — live data layer (Supabase student_events) */
 const SUP='https://asnrquijopjjqfjvwalc.supabase.co';
@@ -1128,14 +1181,27 @@ const mfetch=u=>fetch(u,{headers:MH}).then(r=>r.json());
    dashboard reuses the session supabase-js persists in localStorage. */
 const SBC=window.supabase.createClient(SUP,ANON);
 let UID=null,USER_EMAIL=null,USER_NAME=null,USER_AVATAR=null;
+function adoptUser(u,token){
+  const md=u.user_metadata||{};
+  UID=u.id;USER_EMAIL=u.email;USER_NAME=md.full_name||md.name||null;
+  USER_AVATAR=md.avatar_url||md.picture||null;
+  for(const i of(u.identities||[])){const d=i.identity_data||{};if(!USER_AVATAR)USER_AVATAR=d.avatar_url||d.picture||null;}
+  if(token)MH.Authorization='Bearer '+token;
+}
 function renderAcct(){
   const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name'),st=document.getElementById('acct-settings');
   if(!av||!nm)return;
   // no sign-in wiring — the chip is just the settings affordance; the
   // dropdown always has the dark-mode toggle, plus a Settings row once signed in
   const label=(USER_NAME||USER_EMAIL||'').split('@')[0];
-  if(USER_AVATAR){av.style.backgroundImage=`url("${USER_AVATAR}")`;av.textContent='';}
-  else{av.style.backgroundImage='';av.textContent=UID?(label[0]||'a').toUpperCase():'';}
+  const initial=UID?(label[0]||'a').toUpperCase():'';
+  av.style.backgroundImage='';av.textContent=initial;
+  if(USER_AVATAR){
+    const im=new Image();
+    im.onload=()=>{av.style.backgroundImage=`url("${USER_AVATAR}")`;av.textContent='';};
+    im.onerror=()=>{av.style.backgroundImage='';av.textContent=initial;};
+    im.src=USER_AVATAR;
+  }
   nm.textContent=UID?label:'Settings';
   if(st)st.style.display=UID?'block':'none';
 }
@@ -1143,8 +1209,17 @@ const AUTH_READY=(async()=>{
   try{
     const{data}=await SBC.auth.getSession();
     const s=data.session;
-    if(s&&s.user){UID=s.user.id;USER_EMAIL=s.user.email;const md=s.user.user_metadata||{};USER_NAME=md.full_name||md.name||null;USER_AVATAR=md.avatar_url||md.picture||null;MH.Authorization='Bearer '+s.access_token;}
+    if(s&&s.user){
+      let u=s.user;
+      try{const{data:fresh,error}=await SBC.auth.getUser();if(!error&&fresh.user)u=fresh.user;}catch(e){}
+      adoptUser(u,s.access_token);
+    }
   }catch(e){}
+  SBC.auth.onAuthStateChange((_e,s)=>{
+    if(s&&s.user)adoptUser(s.user,s.access_token);
+    else{UID=null;USER_EMAIL=null;USER_NAME=null;USER_AVATAR=null;}
+    renderAcct();
+  });
   renderAcct();
   return UID;
 })();
@@ -1156,10 +1231,22 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const cleanStem=s=>esc(String(s??'').replace(/\\\((.*?)\\\)/g,' \u2026 ').replace(/\*\*?/g,'').replace(/\[\[(.*?)\]\]/g,'$1').replace(/\s+/g,' ').trim());
 const fmtDate=iso=>new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
 
+let M_PAYLOADS={};
+function renderShelf(fixed){
+  const el=document.getElementById('slist');
+  const ids=Object.keys(fixed).sort((a,b)=>fixed[b]-fixed[a]);
+  document.getElementById('mtab-s').innerHTML='SAVED &middot; '+ids.length;
+  document.getElementById('mfixed').textContent=ids.length;
+  if(ids.length===0){el.innerHTML='<p class="mnote" style="max-width:420px">nothing on the shelf yet \u2014 mark a mistake fixed and it lands here</p>';return;}
+  el.innerHTML=ids.map(id=>{
+    const p=M_PAYLOADS[id]||{};
+    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div><span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
+  }).join('');
+}
 async function loadMistakes(){
   await AUTH_READY;
   const list=document.getElementById('mlist');
-  if(!UID){list.innerHTML=signInNote();document.getElementById('mcount').textContent=0;return;}
+  if(!UID){list.innerHTML=signInNote();document.getElementById('slist').innerHTML=signInNote();document.getElementById('mcount').textContent=0;return;}
   // keep the rendered list on repeat visits — no flash back to the placeholder
   if(!list.dataset.loaded)list.innerHTML='<p class="mnote" style="max-width:420px">loading your mistakes\u2026</p>';
   let events=[];
@@ -1182,34 +1269,38 @@ async function loadMistakes(){
   open.sort((a,b)=>new Date(b.date)-new Date(a.date));
   document.getElementById('mcount').textContent=open.length;
   document.getElementById('mtab-m').innerHTML='MISTAKES &middot; '+open.length;
-  document.getElementById('mfixed').textContent=Object.keys(fixed).length;
-  if(open.length===0){list.innerHTML='<p class="mnote" style="max-width:420px">no mistakes yet \u2014 take a sim or a zen run and they\u2019ll collect themselves here</p>';list.dataset.loaded='1';return;}
-  const ids=open.map(o=>"'"+o.id.replace(/'/g,"''")+"'").join(',');
-  const enc=open.map(o=>encodeURIComponent(o.id)).join(',');
-  let payloads={};
-  try{
-    const[gen,harv]=await Promise.all([
-      mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
-      mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,payload'),
-    ]);
-    for(const r of(gen||[]))payloads[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
-    for(const r of(harv||[]))payloads[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
-  }catch(e){}
-  list.innerHTML=open.map(o=>{
-    const p=payloads[o.id]||{};
+  const nb=document.getElementById('nav-mbdg');
+  if(nb){nb.textContent=open.length;nb.style.display=open.length?'':'none';}
+  const fixedIds=Object.keys(fixed);
+  const enc=[...new Set([...open.map(o=>o.id),...fixedIds])].map(i=>encodeURIComponent(i)).join(',');
+  if(enc){
+    try{
+      const[gen,harv]=await Promise.all([
+        mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
+        mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,payload'),
+      ]);
+      for(const r of(gen||[]))M_PAYLOADS[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
+      for(const r of(harv||[]))M_PAYLOADS[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
+    }catch(e){}
+  }
+  if(open.length===0){list.innerHTML='<p class="mnote" style="max-width:420px">no mistakes yet \u2014 take a sim or a zen run and they\u2019ll collect themselves here</p>';}
+  else list.innerHTML=open.map(o=>{
+    const p=M_PAYLOADS[o.id]||{};
     const tag=o.mode==='exam'?'SAT SIM':'ZEN';
     const meta=[tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
     const thumb=p.img?'<img src="'+esc(p.img)+'" alt="" style="height:44px;border:1px solid var(--line);border-radius:3px;margin-top:6px;display:block;background:#fff">':'';
     return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||o.id)+'<small>'+esc(meta)+'</small></div>'+thumb+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
   }).join('');
   list.dataset.loaded='1';
+  renderShelf(fixed);
 }
 
 /* tabs */
 document.querySelectorAll('[data-mt]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('[data-mt]').forEach(x=>x.classList.toggle('on',x===b));
   document.getElementById('m-title').innerHTML=b.dataset.mt==='m'?'OPEN MISTAKES <b>&middot; NEWEST FIRST</b>':'SAVED &middot; <b>YOUR LITTLE TROPHY SHELF</b>';
-  document.querySelectorAll('.mrow').forEach(r=>r.style.display=r.dataset.k===b.dataset.mt?'flex':'none');
+  document.getElementById('mlist').style.display=b.dataset.mt==='m'?'':'none';
+  document.getElementById('slist').style.display=b.dataset.mt==='s'?'':'none';
 });
 /* delegated retry / fix (rows are dynamic) */
 document.addEventListener('click',e=>{
@@ -1223,7 +1314,9 @@ document.addEventListener('click',e=>{
     if(row.dataset.id){const f=getFixed();f[row.dataset.id]=Date.now();setFixed(f);
       const n=+document.getElementById('mcount').textContent-1;document.getElementById('mcount').textContent=Math.max(0,n);
       document.getElementById('mtab-m').innerHTML='MISTAKES &middot; '+Math.max(0,n);
-      document.getElementById('mfixed').textContent=Object.keys(f).length;}
+      const nb=document.getElementById('nav-mbdg');
+      if(nb){nb.textContent=Math.max(0,n);nb.style.display=n>0?'':'none';}
+      renderShelf(f);}
     toast('FIXED \u2014 RE-QUEUED IN 3 DAYS');return;}
 });
 loadMistakes();
@@ -1306,6 +1399,7 @@ document.addEventListener('click',e=>{
     skUpdateCombo();return;}
 });
 loadSkills();
+loadSim();
 
 /* onboarding modal */
 const ovl=document.getElementById('onb');
@@ -1331,19 +1425,20 @@ async function loadToday(){
   /* masthead date — real clock, no dots, no week numbers */
   $('mast-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
-  /* exam countdown sticky (target SAT) */
-  const target=new Date('2026-09-12T08:00:00');
-  const xd=Math.ceil((target-startOfToday)/TL_MS);
-  if(xd===0){$('st-exam-n').textContent='\u2014';$('st-exam-name').textContent='SAT \u2014 good luck!';}
-  else if(xd<0){$('st-exam-n').textContent=Math.abs(xd);$('st-exam-name').textContent='SAT \u2014 days ago';}
-  else{$('st-exam-n').textContent=xd;$('st-exam-name').textContent='SAT \u2014 Sept 12';}
   /* deadlines with big countdowns */
   const DLS=[
-    {name:'SAT',date:'2026-09-12',meta:'DIGITAL SAT \u00b7 FULL LENGTH'},
+    {name:'SAT',date:'2026-09-12',meta:'DIGITAL SAT · FULL LENGTH'},
   ];
-  $('dl-list').innerHTML=DLS.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(d=>{
+  DLS.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const daysLeft=iso=>Math.round((new Date(iso+'T00:00:00')-startOfToday)/TL_MS);
+  /* exam countdown sticky (soonest deadline, same math as deadline cards) */
+  const xd=daysLeft(DLS[0].date);
+  if(xd===0){$('st-exam-n').textContent='—';$('st-exam-name').textContent='SAT — good luck!';}
+  else if(xd<0){$('st-exam-n').textContent=Math.abs(xd);$('st-exam-name').textContent='SAT — days ago';}
+  else{$('st-exam-n').textContent=xd;$('st-exam-name').textContent='SAT — Sept 12';}
+  $('dl-list').innerHTML=DLS.map(d=>{
     const dt=new Date(d.date+'T00:00:00');
-    const days=Math.ceil((dt-startOfToday)/TL_MS);
+    const days=daysLeft(d.date);
     const mon=dt.toLocaleDateString('en-US',{month:'short'}).toUpperCase();
     const dd=String(dt.getDate()).padStart(2,'0');
     const cls=days<0?'late':days<=3?'soon':'calm';
