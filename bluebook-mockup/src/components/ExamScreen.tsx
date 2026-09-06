@@ -79,27 +79,28 @@ export default function ExamScreen({
         </div>
       </div>
 
-      {isMath && (
-        <DesmosCalculatorPanel
-          key={module.id}
-          moduleId={module.id}
-          open={calcOpen}
-          onClose={() => setCalcOpen(false)}
-        />
-      )}
-
-      <main className="flex-1 overflow-hidden bg-white">
-        <QuestionView
-          module={module}
-          question={question}
-          number={index + 1}
-          answer={answers[question.id]}
-          flagged={!!flags[question.id]}
-          crossed={crossed[question.id] ?? []}
-          onAnswer={onAnswer}
-          onToggleFlag={onToggleFlag}
-          onToggleCross={onToggleCross}
-        />
+      <main className="flex flex-1 overflow-hidden bg-white">
+        {isMath && (
+          <DesmosCalculatorPanel
+            key={module.id}
+            moduleId={module.id}
+            open={calcOpen}
+            onClose={() => setCalcOpen(false)}
+          />
+        )}
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <QuestionView
+            module={module}
+            question={question}
+            number={index + 1}
+            answer={answers[question.id]}
+            flagged={!!flags[question.id]}
+            crossed={crossed[question.id] ?? []}
+            onAnswer={onAnswer}
+            onToggleFlag={onToggleFlag}
+            onToggleCross={onToggleCross}
+          />
+        </div>
       </main>
 
       <BottomBar

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { BarChart3, Clock3, Database, LockOpen, PersonStanding } from 'lucide-react'
+import { BarChart3, Clock3, LockOpen, PersonStanding } from 'lucide-react'
 import { archetypeCounts, type SourceKind } from '../data/live'
 import { useAuth } from '../lib/auth-context'
+import './start-screen.css'
 
 interface BankData {
   generated: Array<{ kind: string }>
@@ -66,79 +67,88 @@ export default function StartScreen({ onStart, bank, loading, error }: StartScre
   const empty = counts !== null && counts[source] === 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f4f5f7] text-[#1c1c1e]">
-      <header className="flex items-center justify-end gap-3 border-b border-[#e2e4ea] bg-white px-5 py-2.5 text-sm">
-        <span className="truncate text-[#5b616e]">{user?.email}</span>
-        <button
-          onClick={() => void signOut()}
-          className="rounded-lg border border-[#d6d9de] px-3 py-1 text-xs font-semibold text-[#3c4048] hover:border-[#9aa1ad]"
-        >
-          Sign out
-        </button>
+    <div className="ps-root">
+      <header className="ps-mast">
+        <div className="ps-brand">
+          Cram<span>duck</span>
+          <small>SAT simulator · v0.3</small>
+        </div>
+        <div className="ps-acct">
+          <span className="ps-email" title={user?.email ?? undefined}>
+            {user?.email}
+          </span>
+          <button className="ps-mini" onClick={() => void signOut()}>
+            Sign out
+          </button>
+        </div>
       </header>
-      <main className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-2xl">
-          <h1 className="text-center text-[30px] font-bold">Practice Test</h1>
 
-          <div className="mt-8 rounded-2xl border border-[#d6d9de] bg-white px-8 py-6 shadow-sm">
-            <div className="flex items-center gap-2.5">
-              <Database size={18} className="text-[#3b4ed8]" />
-              <p className="text-[15px] font-bold">Question source</p>
-            </div>
-            <div className="mt-4 grid gap-2.5">
+      <main className="ps-content">
+        <div className="ps-vh">
+          <h1>
+            Practice <em>test</em>
+          </h1>
+          <span className="sub">Timed · Bluebook-style · Pick a source below</span>
+        </div>
+
+        <section className="ps-panel">
+          <div className="ps-ph">
+            <span className="t">
+              Question source <b>· pick one</b>
+            </span>
+            <span className="t">{loading ? 'Counting…' : 'Live from the bank'}</span>
+          </div>
+          <div className="ps-pb">
+            <div className="ps-opts">
               {SOURCES.map((s) => {
                 const active = source === s.kind
                 const n = counts ? counts[s.kind] : null
+                const badge = loading ? '…' : n === null ? '' : `${n} items`
                 return (
                   <button
                     key={s.kind}
+                    type="button"
                     onClick={() => setSource(s.kind)}
-                    className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
-                      active ? 'border-[#3b4ed8] bg-[#eef0fd]' : 'border-[#d6d9de] bg-white hover:border-[#9aa1ad]'
-                    }`}
+                    className={active ? 'ps-opt on' : 'ps-opt'}
+                    aria-pressed={active}
                   >
-                    <span>
-                      <span className="block text-sm font-bold">{s.label}</span>
-                      <span className="mt-0.5 block text-xs text-[#3c4048]">{s.blurb}</span>
-                    </span>
-                    <span className="ml-4 shrink-0 text-xs font-semibold tabular-nums text-[#5b616e]">
-                      {loading ? '…' : n === null ? '' : `${n} items`}
-                    </span>
+                    <span className="n">{s.label}</span>
+                    {badge && <span className="cnt">{badge}</span>}
+                    <span className="d">{s.blurb}</span>
                   </button>
                 )
               })}
             </div>
-            <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm text-[#3c4048]">
-              <input
-                type="checkbox"
-                checked={excludeBluebook}
-                onChange={(e) => setExcludeBluebook(e.target.checked)}
-                className="h-4 w-4 accent-[#3b4ed8]"
-              />
-              Exclude Bluebook questions from any mixed view
-            </label>
-            <label className="mt-2 flex cursor-pointer items-center gap-2.5 text-sm text-[#3c4048]">
-              <input
-                type="checkbox"
-                checked={verifiedOnly}
-                onChange={(e) => setVerifiedOnly(e.target.checked)}
-                className="h-4 w-4 accent-[#3b4ed8]"
-              />
-              Verified transcriptions only
-            </label>
+
+            <div className="ps-checks">
+              <label className="ps-check">
+                <input
+                  type="checkbox"
+                  checked={excludeBluebook}
+                  onChange={(e) => setExcludeBluebook(e.target.checked)}
+                />
+                <span className="cb" aria-hidden="true" />
+                Exclude Bluebook questions from any mixed view
+              </label>
+              <label className="ps-check">
+                <input type="checkbox" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
+                <span className="cb" aria-hidden="true" />
+                Verified transcriptions only
+              </label>
+            </div>
 
             {archetypes.length > 0 && (
-              <details className="mt-4 rounded-xl border border-[#e2e4ea] px-4 py-3">
-                <summary className="cursor-pointer text-[13px] font-semibold text-[#3c4048]">
-                  By archetype — {archetypes.length} categories
+              <details className="ps-arch">
+                <summary>
+                  By archetype <span className="tw">{archetypes.length} categories ▾</span>
                 </summary>
-                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
+                <div className="rows">
                   {archetypes.map((a) => (
-                    <div key={a.archetype} className="flex items-baseline justify-between gap-2 text-[12px]">
-                      <span className="truncate text-[#3c4048]" title={a.archetype}>
+                    <div key={a.archetype} className="r">
+                      <span className="k" title={a.archetype}>
                         {a.archetype}
                       </span>
-                      <span className="shrink-0 font-semibold tabular-nums text-[#5b616e]">{a.count}</span>
+                      <span className="v">{a.count}</span>
                     </div>
                   ))}
                 </div>
@@ -146,44 +156,52 @@ export default function StartScreen({ onStart, bank, loading, error }: StartScre
             )}
 
             {empty && (
-              <p className="mt-4 rounded-lg bg-[#fdf3f2] px-4 py-2.5 text-sm text-[#a13a32]">
-                No {SOURCES.find((s) => s.kind === source)?.label} questions in the bank yet — pick another source.
+              <p className="ps-note">
+                no {SOURCES.find((s) => s.kind === source)?.label} questions in the bank yet — pick another source
               </p>
             )}
-            {error && <p className="mt-4 rounded-lg bg-[#fdf3f2] px-4 py-2.5 text-sm text-[#a13a32]">{error}</p>}
+            {error && <p className="ps-note err">{error}</p>}
           </div>
+        </section>
 
-          <div className="mt-5 rounded-2xl border border-[#d6d9de] bg-white px-8 py-4 shadow-sm">
+        <section className="ps-panel">
+          <div className="ps-ph">
+            <span className="t">
+              Good to know <b>· before you start</b>
+            </span>
+          </div>
+          <div className="ps-pb">
             {INFO_ROWS.map((row) => (
-              <div key={row.title} className="flex items-start gap-5 border-b border-[#eef0f4] py-5 last:border-b-0">
-                <row.icon size={26} className="mt-1 shrink-0 text-[#3b4ed8]" />
+              <div key={row.title} className="ps-info">
+                <span className="ic" aria-hidden="true">
+                  <row.icon size={20} />
+                </span>
                 <div>
-                  <p className="text-[15px] font-bold">{row.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#3c4048]">{row.body}</p>
+                  <p className="t">{row.title}</p>
+                  <p className="b">{row.body}</p>
                 </div>
               </div>
             ))}
           </div>
+        </section>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-[#8a8f99]">
-            Unofficial mockup with original sample items. Not affiliated with or endorsed by the College Board.
-          </p>
-        </div>
+        <p className="ps-disclaim">
+          Unofficial mockup with original sample items · Not affiliated with or endorsed by the College Board
+        </p>
       </main>
 
-      <footer className="flex items-center justify-end gap-2.5 border-t border-[#c9cede] bg-[#e8ecf5] px-5 py-2.5">
-        <button
-          onClick={() => window.location.assign('./index.html')}
-          className="rounded-full bg-[#3b4ed8] px-6 py-2 text-sm font-semibold text-white hover:bg-[#2f3fb8]"
-        >
-          Back
+      <footer className="ps-bar">
+        <span className="ps-barnote">no scoring here — just reps &amp; feel</span>
+        <button type="button" className="ps-btn sec" onClick={() => window.location.assign('./index.html')}>
+          ← Back
         </button>
         <button
+          type="button"
+          className="ps-btn pri"
           onClick={() => onStart(source, excludeBluebook, verifiedOnly)}
           disabled={loading || empty}
-          className="rounded-full bg-[#3b4ed8] px-6 py-2 text-sm font-semibold text-white hover:bg-[#2f3fb8] disabled:opacity-40"
         >
-          {loading ? 'Loading…' : 'Next'}
+          {loading ? 'Loading…' : 'Start the test →'}
         </button>
       </footer>
     </div>

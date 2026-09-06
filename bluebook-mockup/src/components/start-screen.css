@@ -1,0 +1,572 @@
+/* Cramduck practice-test selector — the papery design language
+   (paper / ink / hard shadows / washi tape / sticky notes).
+   Only this start screen; the simulator behind it stays Bluebook. */
+
+.ps-root {
+  --paper: #f7f2e6;
+  --sheet: #fffdf4;
+  --side: #f2ecdd;
+  --ink: #28231a;
+  --muted: #8d8371;
+  --line: #ddd3bd;
+  --accent: #2979ff;
+  --wrong: #ff4b4b;
+  --shadow: #28231a;
+  --note1: #fff0a3;
+  --note2: #ffd9e0;
+  --tape: rgba(238, 228, 196, 0.78);
+  --rule: rgba(141, 131, 113, 0.16);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Sora', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+.ps-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.ps-root ::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+/* ============ MASTHEAD ============ */
+.ps-mast {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 4vw;
+  border-bottom: 1.5px solid var(--ink);
+}
+.ps-brand {
+  font-family: 'Fraunces', serif;
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.ps-brand span {
+  color: var(--accent);
+}
+.ps-brand small {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.ps-acct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 6px 6px 14px;
+  background: var(--sheet);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+.ps-email {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  max-width: 32vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-mini {
+  font-family: 'Space Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border-radius: 3px;
+  border: 1.5px solid var(--ink);
+  background: var(--sheet);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.ps-mini:hover {
+  box-shadow: 2px 2px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+/* ============ CONTENT ============ */
+.ps-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 34px 4vw 48px;
+  animation: ps-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes ps-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ps-vh {
+  margin-bottom: 28px;
+}
+.ps-vh h1 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: clamp(40px, 5vw, 60px);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.ps-vh h1 em {
+  font-style: italic;
+}
+.ps-vh .sub {
+  display: block;
+  margin-top: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ============ PANELS ============ */
+.ps-panel {
+  position: relative;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--sheet);
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+.ps-panel::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 30px;
+  width: 66px;
+  height: 19px;
+  background: var(--tape);
+  transform: rotate(-2.5deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  clip-path: polygon(0 18%, 5% 0, 95% 0, 100% 18%, 100% 82%, 95% 100%, 5% 100%, 0 82%);
+  z-index: 3;
+}
+.ps-panel + .ps-panel {
+  margin-top: 28px;
+}
+.ps-ph {
+  padding: 14px 20px;
+  border-bottom: 1.5px dashed var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ps-ph .t {
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ps-ph .t b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.ps-pb {
+  padding: 20px;
+  background: repeating-linear-gradient(0deg, transparent 0 27px, var(--rule) 27px 28px);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ============ SOURCE OPTIONS ============ */
+.ps-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.ps-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--sheet);
+  padding: 14px 15px;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+.ps-opt:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.ps-opt.on {
+  background: var(--ink);
+  color: var(--sheet);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+.ps-opt .n {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding-right: 64px;
+}
+.ps-opt .d {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.ps-opt.on .d {
+  color: color-mix(in srgb, var(--sheet) 65%, transparent);
+}
+.ps-opt .cnt {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.ps-opt.on .cnt {
+  color: var(--accent);
+}
+
+/* ============ CHECKBOX ROWS ============ */
+.ps-checks {
+  margin-top: 14px;
+}
+.ps-check {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 6px;
+  border-bottom: 1.5px dashed var(--line);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    padding 0.15s;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ps-check:last-child {
+  border-bottom: none;
+}
+.ps-check:hover {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  padding-left: 12px;
+}
+.ps-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ps-check .cb {
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--ink);
+  border-radius: 2px;
+  flex: none;
+  position: relative;
+  background: var(--sheet);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.ps-check input:checked + .cb {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ps-check input:checked + .cb::after {
+  content: '\2713';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ps-check input:focus-visible + .cb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* ============ ARCHETYPE BREAKDOWN ============ */
+.ps-arch {
+  margin-top: 16px;
+  border: 1.5px dashed var(--line);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--sheet) 60%, transparent);
+}
+.ps-arch summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+.ps-arch summary::-webkit-details-marker {
+  display: none;
+}
+.ps-arch summary:hover {
+  color: var(--ink);
+}
+.ps-arch summary .tw {
+  color: var(--accent);
+  flex: none;
+}
+.ps-arch[open] summary {
+  border-bottom: 1.5px dashed var(--line);
+}
+.ps-arch .rows {
+  padding: 10px 14px 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+@media (min-width: 720px) {
+  .ps-arch .rows {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ps-arch .r {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--line);
+  font-size: 12px;
+}
+.ps-arch .r .k {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-arch .r .v {
+  flex: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ STICKY NOTES ============ */
+.ps-note {
+  position: relative;
+  margin: 20px auto 4px;
+  max-width: 440px;
+  background: var(--note1);
+  border: none;
+  border-radius: 2px;
+  padding: 18px 16px 14px;
+  box-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.14),
+    0 14px 26px -12px rgba(0, 0, 0, 0.4);
+  transform: rotate(-1.4deg);
+  transition: transform 0.2s;
+  font-family: 'Caveat', cursive;
+  font-size: 19px;
+  color: var(--ink);
+  text-align: center;
+}
+.ps-note:hover {
+  transform: rotate(0) scale(1.02);
+}
+.ps-note::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(1.5deg);
+  width: 56px;
+  height: 17px;
+  background: var(--tape);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  clip-path: polygon(0 18%, 4% 0, 96% 0, 100% 18%, 100% 82%, 96% 100%, 4% 100%, 0 82%);
+}
+.ps-note.err {
+  background: var(--note2);
+}
+
+/* ============ INFO ROWS ============ */
+.ps-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 15px 4px;
+  border-bottom: 1.5px dashed var(--line);
+}
+.ps-info:last-child {
+  border-bottom: none;
+}
+.ps-info .ic {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--sheet);
+  box-shadow: 3px 3px 0 var(--shadow);
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+.ps-info:hover .ic {
+  transform: rotate(-4deg) scale(1.06);
+}
+.ps-info .t {
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.ps-info .b {
+  margin-top: 7px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--ink) 80%, var(--muted));
+}
+
+/* ============ DISCLAIMER ============ */
+.ps-disclaim {
+  margin-top: 26px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 2;
+}
+
+/* ============ ACTION BAR ============ */
+.ps-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 4vw;
+  border-top: 1.5px solid var(--ink);
+  background: var(--side);
+}
+.ps-barnote {
+  margin-right: auto;
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  color: var(--accent);
+  transform: rotate(-2deg);
+}
+@media (max-width: 860px) {
+  .ps-barnote {
+    display: none;
+  }
+}
+.ps-btn {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 13px 24px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 2px solid var(--ink);
+  transition: all 0.12s;
+}
+.ps-btn.pri {
+  background: var(--ink);
+  color: var(--sheet);
+  box-shadow: 4px 4px 0 var(--accent);
+}
+.ps-btn.sec {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.ps-btn:hover {
+  transform: translate(-1px, -1px);
+}
+.ps-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0;
+}
+.ps-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ps-btn:disabled:hover {
+  transform: none;
+}
+
+/* ============ SMALL SCREENS ============ */
+@media (max-width: 640px) {
+  .ps-mast {
+    padding: 14px 5vw;
+  }
+  .ps-email {
+    max-width: 38vw;
+  }
+  .ps-pb {
+    padding: 16px 14px;
+  }
+  .ps-ph {
+    padding: 12px 14px;
+  }
+  .ps-opt .n {
+    padding-right: 0;
+  }
+  .ps-opt .cnt {
+    position: static;
+    align-self: flex-start;
+  }
+}

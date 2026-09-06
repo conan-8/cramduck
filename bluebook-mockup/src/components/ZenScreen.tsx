@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { LogOut } from 'lucide-react'
+import { Calculator, LogOut } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import type { BankQuestion, ZenDifficulty, ZenSubject } from '../data/live'
 import { fetchBank, isCorrect, postEvents, selectBySkills, selectZen } from '../data/live'
+import DesmosCalculatorPanel from './DesmosCalculatorPanel'
 import QuestionView from './QuestionView'
 import RichText from './RichText'
 import { formatTime } from './TopBar'
@@ -72,6 +73,7 @@ export default function ZenScreen() {
   const postedRef = useRef<Set<string>>(new Set())
 
   const [secondsLeft, setSecondsLeft] = useState(0)
+  const [calcOpen, setCalcOpen] = useState(false)
   const lastIdRef = useRef<string | null>(null)
   const shownAtRef = useRef<number>(0)
   const retryId = searchParams.get('retry')
@@ -363,7 +365,19 @@ export default function ZenScreen() {
           </span>
         </div>
 
-        <div className="flex items-start justify-end">
+        <div className="flex items-start justify-end gap-6">
+          {!module.split && (
+            <button
+              onClick={() => setCalcOpen((o) => !o)}
+              aria-pressed={calcOpen}
+              className={`flex flex-col items-center gap-1 hover:text-[#3b4ed8] ${
+                calcOpen ? 'text-[#3b4ed8]' : 'text-[#1c1c1e]'
+              }`}
+            >
+              <Calculator size={20} />
+              <span className="text-[13px] font-semibold">Calculator</span>
+            </button>
+          )}
           <button
             onClick={finish}
             className="flex flex-col items-center gap-1 text-[#1c1c1e] hover:text-[#3b4ed8]"
@@ -374,25 +388,34 @@ export default function ZenScreen() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden bg-white">
-        <QuestionView
-          module={module}
-          question={question}
-          number={index + 1}
-          answer={answer}
-          flagged={false}
-          crossed={crossed[question.id] ?? []}
-          onAnswer={(id, v) => setAnswers((p) => ({ ...p, [id]: v }))}
-          onToggleFlag={() => {}}
-          onToggleCross={(id, letter) =>
-            setCrossed((p) => {
-              const list = p[id] ?? []
-              return { ...p, [id]: list.includes(letter) ? list.filter((l) => l !== letter) : [...list, letter] }
-            })
-          }
-          reveal={revealed}
-          hideFlag
-        />
+      <main className="flex flex-1 overflow-hidden bg-white">
+        {!module.split && (
+          <DesmosCalculatorPanel
+            moduleId="zen"
+            open={calcOpen}
+            onClose={() => setCalcOpen(false)}
+          />
+        )}
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <QuestionView
+            module={module}
+            question={question}
+            number={index + 1}
+            answer={answer}
+            flagged={false}
+            crossed={crossed[question.id] ?? []}
+            onAnswer={(id, v) => setAnswers((p) => ({ ...p, [id]: v }))}
+            onToggleFlag={() => {}}
+            onToggleCross={(id, letter) =>
+              setCrossed((p) => {
+                const list = p[id] ?? []
+                return { ...p, [id]: list.includes(letter) ? list.filter((l) => l !== letter) : [...list, letter] }
+              })
+            }
+            reveal={revealed}
+            hideFlag
+          />
+        </div>
       </main>
 
       {revealed && (

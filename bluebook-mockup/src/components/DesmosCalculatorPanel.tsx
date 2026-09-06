@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { ChevronsLeftRight, X } from 'lucide-react'
 import {
   loadDesmos,
   saveCalcState,
@@ -7,8 +7,8 @@ import {
   type DesmosGraphingCalculator,
 } from '../lib/desmos'
 
-const MIN_WIDTH = 420
-const MIN_HEIGHT = 240
+const MIN_WIDTH = 320
+const MAX_RATIO = 0.8
 
 interface DesmosCalculatorPanelProps {
   moduleId: string
@@ -16,11 +16,17 @@ interface DesmosCalculatorPanelProps {
   onClose: () => void
 }
 
+/**
+ * Docked Desmos graphing calculator (real Desmos API). Sits at the left edge
+ * of the question area — while it is open, the question shifts into the
+ * remaining space on the right. Drag the divider handle to resize. The Desmos
+ * instance stays mounted while closed so work is never lost, and its graph
+ * state is also persisted across screens (per module) via lib/desmos.
+ */
 export default function DesmosCalculatorPanel({ moduleId, open, onClose }: DesmosCalculatorPanelProps) {
   const panelRef = useRef<HTMLElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const calcRef = useRef<DesmosGraphingCalculator | null>(null)
-  const [height, setHeight] = useState(460)
   const [width, setWidth] = useState<number | null>(null)
   const [resizing, setResizing] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -53,22 +59,14 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
     if (open) calcRef.current?.resize()
   }, [open])
 
-  const beginResize = (e: React.PointerEvent, corner: boolean) => {
-    const panel = panelRef.current
-    if (!panel) return
+  const beginResize = (e: React.PointerEvent) => {
+    const row = panelRef.current?.parentElement
+    if (!row) return
     e.preventDefault()
-    const startX = e.clientX
-    const startY = e.clientY
-    const startH = panel.offsetHeight
-    const startW = panel.offsetWidth
     setResizing(true)
     const onMove = (ev: PointerEvent) => {
-      setHeight(Math.min(Math.max(MIN_HEIGHT, startH + ev.clientY - startY), window.innerHeight - 130))
-      if (corner) {
-        setWidth(
-          Math.min(Math.max(MIN_WIDTH, startW + 2 * (ev.clientX - startX)), window.innerWidth - 32),
-        )
-      }
+      const rect = row.getBoundingClientRect()
+      setWidth(Math.min(Math.max(MIN_WIDTH, ev.clientX - rect.left), rect.width * MAX_RATIO))
     }
     const onUp = () => {
       setResizing(false)
@@ -85,10 +83,10 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
       ref={panelRef}
       role="dialog"
       aria-label="Desmos graphing calculator"
-      className={`absolute left-1/2 top-[68px] z-40 flex -translate-x-1/2 flex-col overflow-hidden rounded-b-xl bg-white shadow-[0_14px_44px_rgba(16,31,60,0.35)] ring-1 ring-[#c9cede] ${
-        open ? '' : 'invisible pointer-events-none'
-      } ${width === null ? 'w-[min(80vw,860px)]' : ''}`}
-      style={{ height, width: width ?? undefined }}
+      className={`relative h-full shrink-0 flex-col border-r border-[#c9cede] bg-white ${
+        open ? 'flex' : 'hidden'
+      } ${width === null ? 'w-1/2' : ''}`}
+      style={{ width: width ?? undefined }}
     >
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-[#e6e8ec] bg-[#f7f8fa] px-3">
         <span className="text-[12px] font-bold uppercase tracking-wide text-[#3c4048]">
@@ -111,19 +109,15 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
         <div ref={containerRef} className={`min-h-0 flex-1 ${resizing ? 'pointer-events-none' : ''}`} />
       )}
 
+      {/* Resize handle on the divider between calculator and question. */}
       <div
-        className="relative h-3 shrink-0 cursor-row-resize touch-none bg-[#f7f8fa]"
-        onPointerDown={(e) => beginResize(e, false)}
+        onPointerDown={beginResize}
         aria-hidden="true"
+        className="absolute -right-[4px] top-0 z-10 h-full w-[9px] cursor-col-resize touch-none"
       >
-        <div className="absolute left-1/2 top-1/2 h-1 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#c3c8d4]" />
-        <div
-          className="absolute right-0 top-0 h-3 w-4 cursor-nwse-resize"
-          onPointerDown={(e) => {
-            e.stopPropagation()
-            beginResize(e, true)
-          }}
-        />
+        <span className="absolute left-1/2 top-1/2 flex h-8 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[6px] bg-[#1c1c1e] text-white">
+          <ChevronsLeftRight size={15} />
+        </span>
       </div>
     </section>
   )
