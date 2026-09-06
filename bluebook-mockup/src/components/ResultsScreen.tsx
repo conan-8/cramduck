@@ -1,12 +1,78 @@
 import { useMemo } from 'react'
+import type { ExamModule, Question } from '../types/exam'
+import { isCorrect } from '../data/live'
+import RichText from './RichText'
 
 const CONFETTI_COLORS = ['#f7d54d', '#f48fb1', '#80deea', '#ffffff', '#ffcc80']
 
 interface ResultsScreenProps {
+  test: ExamModule[]
+  answers: Record<string, string>
   onExit: () => void
 }
 
-export default function ResultsScreen({ onExit }: ResultsScreenProps) {
+/** One reviewed question: badge, prompt, your answer vs correct, rationale. */
+function QuestionReview({ q, number, answer }: { q: Question; number: number; answer: string | undefined }) {
+  const answered = answer !== undefined && answer.trim() !== ''
+  const right = answered ? isCorrect(q, answer) : false
+  const optionText = (letter: string) => {
+    const i = letter.charCodeAt(0) - 65
+    return q.options?.[i]
+  }
+
+  return (
+    <div className="flex items-start gap-4 border-b border-[#eef0f4] px-6 py-5 last:border-b-0">
+      <span
+        aria-hidden="true"
+        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white ${
+          !answered ? 'bg-[#9aa1ad]' : right ? 'bg-[#2e7d32]' : 'bg-[#c62828]'
+        }`}
+      >
+        {!answered ? '–' : right ? '✓' : '✗'}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#8a8f99]">
+          {number} · {q.skill}
+        </p>
+        <RichText
+          text={q.prompt}
+          className="mt-1 block font-exam-serif text-[15px] leading-[1.6] text-[#1c1c1e]"
+        />
+        <p className="mt-1.5 text-[13px] text-[#5b616e]">
+          {!answered ? (
+            'Skipped — no answer.'
+          ) : (
+            <>
+              Your answer:{' '}
+              <b className={right ? 'text-[#1b5e20]' : 'text-[#b71c1c]'}>
+                {q.options ? `${answer}${optionText(answer) ? ` — ${optionText(answer)}` : ''}` : answer}
+              </b>
+            </>
+          )}
+          {!right && (
+            <>
+              {' '}
+              · Correct: <b className="text-[#1b5e20]">{q.correct}</b>
+            </>
+          )}
+        </p>
+        {q.rationale ? (
+          <div className="mt-2.5 rounded-lg bg-[#f4f6fa] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#8a8f99]">Why</p>
+            <RichText
+              text={q.rationale}
+              className="mt-1 block font-exam-serif text-[14px] leading-[1.65] text-[#1c1c1e]"
+            />
+          </div>
+        ) : (
+          <p className="mt-2 font-exam-serif text-[14px] italic text-[#8a8f99]">No rationale for this one yet.</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function ResultsScreen({ test, answers, onExit }: ResultsScreenProps) {
   const confetti = useMemo(
     () =>
       Array.from({ length: 40 }, (_, i) => ({
@@ -19,6 +85,22 @@ export default function ResultsScreen({ onExit }: ResultsScreenProps) {
       })),
     [],
   )
+
+  const total = test.reduce((n, m) => n + m.questions.length, 0)
+  const answered = test.reduce(
+    (n, m) => n + m.questions.filter((q) => (answers[q.id] ?? '').trim() !== '').length,
+    0,
+  )
+  const correct = test.reduce(
+    (n, m) =>
+      n +
+      m.questions.filter((q) => {
+        const a = answers[q.id]
+        return a !== undefined && a.trim() !== '' && isCorrect(q, a)
+      }).length,
+    0,
+  )
+  const pct = answered > 0 ? Math.round((correct / answered) * 100) : 0
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#1e2350] text-white">
@@ -50,31 +132,52 @@ export default function ResultsScreen({ onExit }: ResultsScreenProps) {
         </button>
       </header>
 
-      <main className="relative z-10 flex flex-col items-center px-6 py-16">
+      <main className="relative z-10 flex flex-col items-center px-6 py-12">
         <h1 className="text-[34px] font-bold">You're All Finished!</h1>
 
-        <div className="mt-10 flex w-full max-w-2xl items-center gap-8 rounded-2xl bg-white p-9 text-[#1c1c1e]">
-          {/* Laptop illustration */}
-          <svg width="150" height="120" viewBox="0 0 150 120" aria-hidden="true" className="shrink-0">
-            <rect x="25" y="15" width="100" height="70" rx="6" fill="#eef1fc" stroke="#1c1c1e" strokeWidth="2.5" />
-            <circle cx="75" cy="50" r="20" fill="#bfe3f7" stroke="#1c1c1e" strokeWidth="2.5" />
-            <circle cx="68" cy="46" r="2.4" fill="#1c1c1e" />
-            <circle cx="82" cy="46" r="2.4" fill="#1c1c1e" />
-            <path d="M 67 55 Q 75 62 83 55" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M 15 92 L 135 92 L 128 100 L 22 100 Z" fill="#d6d9de" stroke="#1c1c1e" strokeWidth="2.5" />
-          </svg>
-          <p className="text-[16px] leading-relaxed">
-            Congratulations on completing this SAT practice test! This mockup doesn't score your work or show an answer
-            key.
-          </p>
+        <div className="mt-8 grid w-full max-w-2xl grid-cols-3 gap-4 rounded-2xl bg-white p-6 text-center text-[#1c1c1e]">
+          <div>
+            <p className="text-[34px] font-bold leading-none">{pct}%</p>
+            <p className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-[#8a8f99]">accuracy</p>
+          </div>
+          <div>
+            <p className="text-[34px] font-bold leading-none">
+              {correct}<span className="text-[18px] text-[#8a8f99]">/{answered}</span>
+            </p>
+            <p className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-[#8a8f99]">correct</p>
+          </div>
+          <div>
+            <p className="text-[34px] font-bold leading-none">{total - answered}</p>
+            <p className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-[#8a8f99]">unanswered</p>
+          </div>
         </div>
 
         <button
           onClick={onExit}
-          className="mt-12 rounded-full bg-[#f7d54d] px-10 py-3.5 text-[15px] font-bold text-[#1c1c1e] hover:bg-[#efc93a]"
+          className="mt-10 rounded-full bg-[#f7d54d] px-10 py-3.5 text-[15px] font-bold text-[#1c1c1e] hover:bg-[#efc93a]"
         >
           Restart Practice Test
         </button>
+
+        {/* Question-by-question review with rationales */}
+        <section className="mt-12 w-full max-w-3xl" aria-label="Question review">
+          <h2 className="text-center text-[22px] font-bold">Answer key &amp; explanations</h2>
+          {test.map((m) => (
+            <div key={m.id} className="mt-8">
+              <p className="mb-3 text-center text-[12px] font-semibold uppercase tracking-[1.4px] text-[#c9cede]">
+                {m.label} · {m.title}
+              </p>
+              <div className="overflow-hidden rounded-2xl border border-[#d6d9de] bg-white text-[#1c1c1e] shadow-sm">
+                {m.questions.map((q, i) => (
+                  <QuestionReview key={q.id} q={q} number={i + 1} answer={answers[q.id]} />
+                ))}
+              </div>
+            </div>
+          ))}
+          {total === 0 && (
+            <p className="mt-6 text-center text-sm text-[#c9cede]">No questions in this run.</p>
+          )}
+        </section>
       </main>
     </div>
   )

@@ -256,5 +256,5 @@ export default function Home() {
     return <BreakScreen onResume={() => beginModule(BREAK_BEFORE_MODULE)} />
   }
 
-  return <ResultsScreen onExit={exitToStart} />
+  return <ResultsScreen test={test} answers={answers} onExit={exitToStart} />
 }
