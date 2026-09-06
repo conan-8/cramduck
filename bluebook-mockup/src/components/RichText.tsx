@@ -14,7 +14,9 @@ import { assetUrl } from '../lib/assets'
 function renderSegments(text: string, keyPrefix: string): ReactNode[] {
   // Images saved from the API: {{img:path}} inline (math-size) vs
   // {{imgfull:path}} block-level (graph answer options, stimulus figures).
-  const imgParts = text.split(/\{\{(imgfull?):(.+?)\}\}/g)
+  // NOTE: alternation must be (imgfull|img) — (imgfull?) matches "imgful(l)"
+  // and never "img", which left inline tokens rendering as literal text.
+  const imgParts = text.split(/\{\{(imgfull|img):(.+?)\}\}/g)
   if (imgParts.length > 1) {
     const nodes: ReactNode[] = []
     for (let i = 0; i < imgParts.length; i += 3) {

@@ -469,6 +469,14 @@ def convert_html(raw: str, qid: str | None = None) -> dict:
     tables_html = re.findall(r'<table\b.*?</table>', s, re.S | re.I)
     s = re.sub(r'<svg\b.*?</svg>', ' ', s, flags=re.S | re.I)
     s = re.sub(r'<table\b.*?</table>', ' ', s, flags=re.S | re.I)
+    # LaTeX chunks carry raw < and > (MathML &lt;/&#60; become real chars in
+    # mathml_to_latex output) — an HTML parser would read "<RS\)" as a tag
+    # and swallow everything up to the next ">". Escape them inside math
+    # spans before BlockParser; handle_entityref unescapes them back to text.
+    s = re.sub(
+        r'\\\((.+?)\\\)',
+        lambda m: '\\(' + m.group(1).replace('<', '&lt;').replace('>', '&gt;') + '\\)',
+        s, flags=re.S)
     p = BlockParser(qid)
     p.feed(s)
     text = p.text()

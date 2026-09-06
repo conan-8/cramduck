@@ -45,8 +45,25 @@ for _dw, _d in _DIGITS.items():
         FRAC_WORDS[f'a {_sg}'] = (1, _d)
         FRAC_WORDS[f'one-{_sg}'] = (1, _d)
 
-UNITS = ('miles', 'mile', 'seconds', 'hours', 'hour', 'minutes',
-         'centimeters', 'centimeter', 'meters', 'meter', 'feet', 'inches')
+UNITS = ('miles', 'mile', 'seconds', 'hours', 'hour', 'minutes', 'minute',
+         'centimeters', 'centimeter', 'meters', 'meter', 'feet', 'inches',
+         'gallons', 'gallon', 'ounces', 'ounce', 'liters', 'liter', 'litres',
+         'litre', 'pounds', 'pound', 'kilograms', 'kilogram', 'grams', 'gram',
+         'milligrams', 'milligram', 'kilometers', 'kilometer', 'yards', 'yard',
+         'cups', 'cup', 'quarts', 'quart', 'pints', 'pint', 'tablespoons',
+         'teaspoons', 'milliliters', 'milliliter', 'tons', 'ton', 'cubic',
+         'days', 'day', 'weeks', 'week', 'months', 'month', 'years', 'year')
+
+# multi-word unit phrases first ("fluid ounces", "square feet", …)
+UNIT_PHRASES = ('fluid ounces', 'fluid ounce', 'square feet', 'square foot',
+                'square inches', 'square inch', 'square yards', 'square yard',
+                'square meters', 'square meter', 'square miles', 'square mile',
+                'cubic feet', 'cubic foot', 'cubic inches', 'cubic inch',
+                'cubic meters', 'cubic meter', 'cubic centimeters',
+                'cubic centimeter', 'cubic yards', 'pounds per square inch',
+                'miles per hour', 'kilometers per hour', 'meters per second')
+
+_TEXTSPAN_RX = re.compile(r'\\text\{[^{}]*\}')
 
 # base of a power: parenthesized group (one level of nesting) or token cluster
 _BASE = r'(\((?:[^()]|\([^()]*\))*\)|[\w.{}^\\]+(?:\s+[\w.{}^\\]+)*?)'
@@ -282,6 +299,28 @@ def clean_math(seg: str) -> str:
                lambda m: f'= \\frac{{{m.group(1).strip()}}}{{{m.group(2).strip()}}}', s)
 
     # 12. subscripts / line segments / digit words / units
+    # repair earlier double-wrap damage: "\text{\text{ X }}" -> "\text{ X}"
+    # (compounding across runs nested these several levels deep — loop; the
+    # outer wrap may span several spans: "\text{\text{cubic} \text{cm}}")
+    while '\\text{\\text{' in s:
+        ns = re.sub(
+            r'\\text\{\s*(\\text\{(?:[^{}]|\{[^{}]*\})*\})((?:[^{}]|\{[^{}]*\})*)\}',
+            r'\1\2', s)
+        if ns == s:
+            break
+        s = ns
+    # unit words -> \text{...}, skipping spans already inside \text{...}
+    def _units(part: str) -> str:
+        for phrase in UNIT_PHRASES:
+            part = re.sub(rf'(?i)(?<![\\a-zA-Z]){re.escape(phrase)}\b',
+                          rf'\\text{{ {phrase} }}', part)
+        for unit in UNITS:
+            part = re.sub(rf'(?i)(?<![\\a-zA-Z]){unit}\b',
+                          rf'\\text{{ {unit} }}', part)
+        return part
+    parts = _TEXTSPAN_RX.split(s)
+    spans = _TEXTSPAN_RX.findall(s)
+    s = ''.join(p for pair in zip(map(_units, parts), spans + ['']) for p in pair)
     s = re.sub(r'RootIndex\s+(\w+)\s*\\sqrt\{', r'\\sqrt[\1]{', s)
     s = re.sub(r'Superscript\s+(-?[\w.{}\\ ]+?)\s*Baseline', r'^{\1}', s)
     s = re.sub(r'\bSuperscript\b', '^', s)
@@ -292,8 +331,6 @@ def clean_math(seg: str) -> str:
     s = re.sub(r'(?i)length (?:line segment|side)((?:\s+[A-Z])+)',
                lambda m: m.group(1).replace(' ', ''), s)
     s = re.sub(r'(?i)\bzero\b', '0', s)
-    for unit in UNITS:
-        s = re.sub(rf'(?i)\b{unit}\b', rf'\\text{{ {unit}}}', s)
 
     # 13. nested \frac{\sqrt{A}{B}} family — the numerator's closing brace
     # slipped out: "\frac{\sqrt{y}{\sqrt[3]{x^{2}}}}" -> "\frac{\sqrt{y}}{\sqrt[3]{x^{2}}}"
@@ -323,7 +360,7 @@ MATH_SEG_RE = re.compile(r'\\\((.+?)\\\)', re.S)
 # the "\(" landed between a base and its exponent instead of before the base,
 # leaving every later segment mispaired. Pull the preceding token (a paren
 # group or a word/number) inside and close right after the exponent.
-SLIP_RE = re.compile(r'(\((?:[^()]|\([^()]*\))*\)|\*[\w. ]+\*|[\w.*]+)\\\(\^\{([^{}]+)\}')
+SLIP_RE = re.compile(r'(\((?:[^()]|\([^()]*\))*\)|\*[\w. ]+\*|[\w.*]+)\\\(([\^_])\{([^{}]+)\}(?:\\\))?')
 
 
 def _unslip(m: re.Match) -> str:
@@ -332,8 +369,22 @@ def _unslip(m: re.Match) -> str:
     inner = re.fullmatch(r'\(\\\((.*?)\\\)\)', base, re.S)
     if inner:
         base = '(' + inner.group(1) + ')'
-    exp = m.group(2).replace('*', '')
-    return '\\(' + base + '^{' + exp + '}\\)'
+    exp = m.group(3).replace('*', '')
+    return '\\(' + base + m.group(2) + '{' + exp + '}\\)'
+
+
+def _close_dangling(text: str) -> str:
+    """Repair fields where transcription lost the closing "\\)".
+    Only runs when the field's \\( \\) counts are unbalanced."""
+    if text.count('\\(') <= text.count('\\)'):
+        return text
+    # isotope superscripts left open: "\(^{87}Sr" -> "\(^{87}Sr\)"
+    text = re.sub(r'\\\((\^\{[^{}]*\}|\^\w+)([A-Z][a-z]?)', r'\\(\1\2\\)', text)
+    # "\(" closed by a plain ")": "(\(^{13}C)" -> "(\(^{13}C\))",
+    # "PH\(_{3})" -> "PH\(_{3}\))". The content may not end with a backslash,
+    # which keeps balanced "(\(x\))" untouched.
+    text = re.sub(r'\\\(([^()\n]*?[^()\n\\])\)', r'\\(\1\\))', text)
+    return text
 
 
 def clean_text(text: str) -> str:
@@ -347,6 +398,7 @@ def clean_text(text: str) -> str:
         text = unslipped
     # nested math delimiters: "\((\(\theta\) – 27)^{2}\)" -> "\((\theta – 27)^{2}\)"
     text = re.sub(r'\\\(\(\\\(([^()]+?)\\\)', r'\\((\1', text)
+    text = _close_dangling(text)
     # stray italic marker glued to a math segment: "*\(x^{2}" -> "\(x^{2}\)"
     # (but keep the intentional *\(x\)* italic-wrapped math)
     text = re.sub(r'\*\\\(([^()]+?)\\\)(?!\*)', r'\\(\1\\)', text)

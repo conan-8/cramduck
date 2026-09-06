@@ -20,8 +20,10 @@ Exit 0.
 """
 
 import json
+import html
 import sys
 from datetime import datetime, timezone
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,20 +32,89 @@ sys.path.insert(0, str(ROOT / 'scripts' / 'lib'))
 from wordmath import clean_text, residuals, MATH_SEG_RE  # noqa: E402
 
 CURATED = ROOT / 'research' / 'sat' / 'curated'
+CACHE = ROOT / 'research' / 'sat' / 'curate' / 'api-cache'
+
+# apply-api-content.py owns the HTML->markup converter; import it by path
+# (its filename has dashes).
+_spec = spec_from_file_location('apply_api_content', ROOT / 'scripts' / 'apply-api-content.py')
+_api = module_from_spec(_spec)
+_spec.loader.exec_module(_api)
+
+
+def _rebuild_fields(rec: dict) -> int:
+    """Rebuilt truncated fields from the api-cache (see REBUILD_FROM_CACHE).
+    Returns the number of fields replaced."""
+    fields = REBUILD_FROM_CACHE.get(rec.get('sourceId', ''))
+    if not fields:
+        return 0
+    cache_path = CACHE / f"{rec['sourceId']}.json"
+    if not cache_path.exists():
+        print(f"fix-wordmath: {rec['sourceId']} marked for rebuild but no api-cache — skipped")
+        return 0
+    payload = json.loads(cache_path.read_text()).get('payload') or {}
+    is_old = 'item_id' in payload
+    n = 0
+
+    def conv(html_src: str) -> str:
+        # old-format payloads are double-encoded ("&lt;/span&gt;") — unescape
+        # first so the parser sees real tags; clean_text keeps re-runs
+        # idempotent (the stored value is already cleaned)
+        return clean_text(_api.convert_html(html.unescape(html_src), rec['sourceId'])['text'] or '')
+
+    for field in fields:
+        if field == 'prompt':
+            raw = payload.get('stem') if not is_old else payload.get('prompt')
+            nv = conv(raw or '')
+            if nv and nv != rec.get('prompt'):
+                rec['prompt'] = nv
+                n += 1
+        elif field == 'rationale':
+            raw = payload.get('rationale') if not is_old else (payload.get('answer') or {}).get('rationale')
+            nv = conv(raw or '')
+            if nv and nv != rec.get('rationale'):
+                rec['rationale'] = nv
+                n += 1
+        elif field == 'info':
+            raw = payload.get('stimulus') if not is_old else payload.get('body')
+            nv = conv(raw or '')
+            if nv and nv != rec.get('info'):
+                rec['info'] = nv
+                n += 1
+        elif field == 'options':
+            new_opts = []
+            if not is_old:
+                for i, opt in enumerate((payload.get('answerOptions') or [])[:4]):
+                    t = conv(opt.get('content') or '')
+                    new_opts.append({'id': chr(65 + i), 'text': t or '[figure]'})
+            else:
+                choices = (payload.get('answer') or {}).get('choices') or {}
+                for i, letter in enumerate('abcd'):
+                    ch = choices.get(letter)
+                    if ch:
+                        new_opts.append({'id': chr(65 + i), 'text': conv(ch.get('body') or '')})
+            if len(new_opts) == 4 and new_opts != rec.get('options'):
+                rec['options'] = new_opts
+                n += 1
+        elif field.startswith('opt') and not is_old:
+            idx = ord(field[3]) - 65
+            opts = payload.get('answerOptions') or []
+            if idx < len(opts):
+                nv = conv(opts[idx].get('content') or '')
+                if nv and nv != rec['options'][idx].get('text'):
+                    rec['options'][idx]['text'] = nv
+                    n += 1
+    return n
 
 TEXT_FIELDS = ('info', 'prompt', 'rationale', 'gridAnswer')
 
 # Hand-verified repairs for damage no rule can safely reconstruct. Keyed by
 # (sourceId, field) — 'optA'..'optD' address options. Each (old, new) pair is
-# applied verbatim before the generic cleanup.
+# applied verbatim before the generic cleanup; pairs are applied only when
+# `old` is present AND `new` is not, so re-runs never compound.
 OVERRIDES: dict[tuple[str, str], list[tuple[str, str]]] = {
     ('ssqb-e117d3b8', 'rationale'): [
         (r'By rewriting \((a + c)^{4}\) as (\((a + c)^{2}\))\(^{2}, it is',
          r'By rewriting \((a + c)^{4}\) as \(( ( a + c )^{2} )^{2}\), it is'),
-    ],
-    ('ssqb-0ef4a7b6', 'rationale'): [
-        (r'The inequality \(106 Choice B is incorrect.',
-         r'The inequality \(h > 100\). Choice B is incorrect.'),
     ],
     ('ssqb-fc3dfa26', 'rationale'): [
         (r'by \(^{\(\frac{x - 3}{x - 3}\)} yields',
@@ -52,9 +123,6 @@ OVERRIDES: dict[tuple[str, str], list[tuple[str, str]]] = {
     ('ssqb-d41cf4d3', 'rationale'): [
         (r'it follows that \(a Choice A is incorrect.',
          r'it follows that \(a<b\). Choice A is incorrect.'),
-    ],
-    ('ssqb-d41cf4d3', 'optD'): [
-        (r'\(a', r'\(a<b\)'),
     ],
     ('ssqb-dc71597b', 'rationale'): [
         (r'\sqrt{\frac{a}}{b = \frac{\sqrt{a}}{\sqrt{b}}}',
@@ -72,22 +140,60 @@ OVERRIDES: dict[tuple[str, str], list[tuple[str, str]]] = {
         (r'ty \(6 Choice A is incorrect.',
          r'ty \(6<x<18\) represents all possible values of \(x\). Choice A is incorrect.'),
     ],
-    ('ssqb-5bf5136d', 'optC'): [
-        (r'\(6', r'\(6<x<18\)'),
+    # 7392dfc1: the divisors were dropped from every "dividing by …" sentence;
+    # each is recoverable from the resulting equation (4x+6=12 ÷ n).
+    ('ssqb-7392dfc1', 'rationale'): [
+        (r'by \(\) yields \(\frac{4x + 6}{2 = \frac{12}{2}}\)',
+         r'by \(2\) yields \(\frac{4x + 6}{2} = \frac{12}{2}\)'),
+        (r'by \(\) gives \(2x + 3 = 6\)',
+         r'by \(2\) gives \(2x + 3 = 6\)'),
+        (r'by \(\) gives \(x + \frac{3}{2} = 3\)',
+         r'by \(4\) gives \(x + \frac{3}{2} = 3\)'),
+        (r'by \(\) gives \(\frac{4}{3} x + 2 = 4\)',
+         r'by \(3\) gives \(\frac{4}{3} x + 2 = 4\)'),
+    ],
+    # a1696f3e: the function name's math span was empty in the harvest.
+    ('ssqb-a1696f3e', 'prompt'): [
+        (r'The function \(\) is defined as \(g x = 5x + a\)',
+         r'The function \(g\) is defined as \(g\left( x \right) = 5x + a\)'),
+        (r'If \(g 4 = 31\)',
+         r'If \(g\left( 4 \right) = 31\)'),
     ],
 }
 
-# Records whose question-critical content was lost at harvest (the expression
-# the question is about is missing from both the curated and the raw record).
-# Marked review.status='returned' so they leave the simulator pools until a
-# curator re-enters them from the source workbook.
+# Fields truncated by the harvest's HTML conversion (raw "<" in LaTeX chunks
+# swallowed text) are rebuilt from the untouched api-cache via
+# apply-api-content's convert_html. 'options' rebuilds all four choices.
+REBUILD_FROM_CACHE: dict[str, list[str]] = {
+    'ssqb-053e5e9f': ['prompt', 'rationale'],
+    'ssqb-94f7c9e2': ['prompt', 'rationale'],
+    'ssqb-72ae8a87': ['prompt'],
+    'ssqb-d84a514a': ['prompt'],
+    'ssqb-db88a933': ['prompt'],
+    'ssqb-190be2fc': ['rationale'],
+    'ssqb-46308566': ['rationale'],
+    'ssqb-6aefc52b': ['rationale'],
+    'ssqb-0ef4a7b6': ['rationale', 'options'],
+    'ssqb-781c2f6e': ['prompt', 'rationale'],
+    'ssqb-d41cf4d3': ['optD'],
+    'ssqb-5bf5136d': ['optC'],
+    'ssqb-064c8999': ['info'],
+    'ssqb-6d69ab93': ['options'],
+    'ssqb-8af926b1': ['info'],
+    'ssqb-db88a933': ['rationale'],
+    'ssqb-e11294f9': ['prompt', 'rationale'],
+    'ssqb-e9349667': ['rationale'],
+    'ssqb-f01ef454': ['options', 'rationale'],
+}
+
+# Records that stay out of the simulator pools (review.status='returned'):
+#   c81b6c57 — the expression the question is about was lost at harvest and
+#              is not in the api-cache either (old-format empty math span)
+#   ecca0603 — answer choices are HTML tables; the options UI can't render them
 RETURNED: dict[str, str] = {
-    'ssqb-ecca0603': 'prompt is missing one inequality of the system (harvest content loss)',
-    'ssqb-a1696f3e': 'function definition missing from prompt (harvest content loss)',
-    'ssqb-c81b6c57': 'expression containing p missing from prompt (harvest content loss)',
-    'ssqb-7392dfc1': 'expression the question asks about missing (harvest content loss)',
-    'ssqb-1e1027a7': 'a t-value is missing from the choice-A rationale (harvest content loss)',
-    'ssqb-781c2f6e': 'question wording garbled at harvest (missing "a > 0" clause and lead-in)',
+    'ssqb-c81b6c57': 'expression containing p missing from prompt (harvest content loss, not in cache)',
+    'ssqb-ecca0603': 'answer choices are table figures — unsupported by the options UI',
+    'ssqb-1e1027a7': 'a t-value is missing from the choice-A rationale (empty math image in harvest)',
 }
 
 
@@ -99,7 +205,9 @@ def clean_record(rec: dict) -> tuple[dict, int]:
 
     def prep(field: str, v: str) -> str:
         for old, new in OVERRIDES.get((sid, field), []):
-            if old in v:
+            # guard: skip when the replacement is already applied — substring
+            # overrides must never compound across runs
+            if old in v and new not in v:
                 v = v.replace(old, new)
         return v
 
@@ -151,20 +259,32 @@ def main() -> int:
     leftover: list[tuple[str, str, list[str]]] = []
     for f in files:
         rec = json.loads(f.read_text())
-        # content-loss records: mark returned so they leave the simulator pools
         sid = rec.get('sourceId', f.stem)
-        if sid in RETURNED and rec.get('review', {}).get('status') != 'returned':
-            rec['review'] = {
-                'status': 'returned',
-                'reasons': ['other'],
-                'note': RETURNED[sid],
-                'at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
-            }
-            f.write_text(json.dumps(rec, indent=2) + '\n')
-            changed_records += 1
+        review = rec.get('review') or {}
+        if sid in RETURNED:
+            # content-loss/unsupported records: keep them out of the pools
+            if review.get('status') != 'returned' or review.get('note') != RETURNED[sid]:
+                rec['review'] = {
+                    'status': 'returned',
+                    'reasons': ['other'],
+                    'note': RETURNED[sid],
+                    'at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+                }
+                f.write_text(json.dumps(rec, indent=2) + '\n')
+                changed_records += 1
             continue
+        if review.get('status') == 'returned' and review.get('note') and (
+                'harvest content loss' in review['note'] or 'garbled at harvest' in review['note']):
+            # recovered by a rebuild from the api-cache — restore approval
+            rec['review'] = {'status': 'approved', 'at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}
+            review = rec['review']
+            review_changed = True
+        else:
+            review_changed = False
+        n_rebuilt = _rebuild_fields(rec)
         out, n = clean_record(rec)
-        if n:
+        n += n_rebuilt
+        if n or review_changed:
             f.write_text(json.dumps(out, indent=2) + '\n')
             changed_records += 1
             changed_fields += n
