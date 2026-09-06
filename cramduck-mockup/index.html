@@ -458,6 +458,20 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 .xrow.sel .cb::after{content:"\2713";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700}
 .xrow .xt{font-size:14px;font-weight:600}
 .xrow .xd{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+
+/* ============ SETTINGS OVERLAY ============ */
+.set-sec{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:24px 0 9px}
+.set-acct{display:flex;align-items:center;gap:14px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);padding:14px 16px;box-shadow:3px 3px 0 var(--shadow)}
+.set-acct .sa-av{width:44px;height:44px;border-radius:50%;background:var(--ink) center/cover no-repeat;color:var(--sheet);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0}
+.set-acct .sa-n,.set-acct .sa-e{display:block}
+.set-acct .sa-n{font-family:'Fraunces',serif;font-weight:700;font-size:17px;color:var(--ink)}
+.set-acct .sa-e{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-top:3px}
+.set-acct .set-act{margin-left:auto;flex-shrink:0;text-decoration:none}
+.set-row{display:flex;align-items:center;gap:12px;padding:12px 2px}
+.set-row .xt{font-size:14px;font-weight:600;color:var(--ink)}
+.set-row .xd{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+#set-theme .xrow:first-child{border-top:1.5px dashed var(--line)}
+#set-theme .xrow:last-child{border-bottom:none}
 .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,90px);background:var(--ink);color:var(--sheet);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:13px 22px;border-radius:3px;box-shadow:4px 4px 0 var(--accent);z-index:60;transition:transform .4s cubic-bezier(.16,1,.3,1);white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
 
@@ -860,19 +874,47 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
     <a class="btn pri" id="save-onb" style="display:block;text-align:center">Pin to my desk &rarr;</a>
   </div>
 </div>
+
+<div class="ovl" id="set-ovl">
+  <div class="sheet">
+    <button class="mini" id="close-set" style="position:absolute;top:14px;right:14px">&#10005;</button>
+    <span class="mono" style="font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)">SETTINGS &middot; YOUR DESK</span>
+    <h2 style="font-family:'Fraunces',serif;font-weight:900;font-size:30px;letter-spacing:-.02em;margin:10px 0 4px">Make it <em style="font-weight:400">yours.</em></h2>
+
+    <div class="set-sec">Account</div>
+    <div class="set-acct" id="set-acct"></div>
+
+    <div class="set-sec">Appearance</div>
+    <div id="set-theme">
+      <div class="xrow" data-theme="light"><span class="cb"></span><span class="xt">Off-white</span><span class="xd">Paper, by default</span></div>
+      <div class="xrow" data-theme="dark"><span class="cb"></span><span class="xt">Warm black</span><span class="xd">Late-night sessions</span></div>
+      <div class="xrow" data-theme="blueprint"><span class="cb"></span><span class="xt">Blueprint</span><span class="xd">Drafting-table blue</span></div>
+    </div>
+
+    <div class="set-sec">Data</div>
+    <div class="set-row"><span class="xt">Tucked-away mistakes</span><span class="xd" id="set-mcount">0</span><button class="mini" id="clear-fixed">Clear</button></div>
+    <p class="mnote" style="max-width:440px;margin-top:14px">your theme + tucked-away mistakes live on this device &mdash; everything else syncs with your account</p>
+  </div>
+</div>
 <div class="toast" id="toast">PLAN UPDATED</div>
 
 <script>
-/* modes */
+/* modes — persisted, switchable from the settings overlay */
+const MODE_KEY='cramduck_mode';
 function setMode(m){
   document.body.dataset.mode=m;
+  try{localStorage.setItem(MODE_KEY,m);}catch(e){}
   const sw=document.getElementById('darksw');
   if(sw){sw.classList.toggle('on',m==='dark');sw.setAttribute('aria-checked',String(m==='dark'));}
+  syncThemeRows();
+}
+function syncThemeRows(){
+  document.querySelectorAll('#set-theme .xrow').forEach(r=>r.classList.toggle('sel',r.dataset.theme===document.body.dataset.mode));
 }
 document.getElementById('darksw').addEventListener('click',()=>{
   setMode(document.body.dataset.mode==='dark'?'light':'dark');
 });
-setMode(document.body.dataset.mode||'light');
+setMode((()=>{try{return localStorage.getItem(MODE_KEY)}catch(e){return null}})()||'light');
 
 /* views */
 function goView(name){
@@ -1208,10 +1250,11 @@ function adoptUser(u,token){
   if(token)MH.Authorization='Bearer '+token;
 }
 function renderAcct(){
-  const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name'),st=document.getElementById('acct-settings');
+  const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name');
   if(!av||!nm)return;
   // no sign-in wiring — the chip is just the settings affordance; the
-  // dropdown always has the dark-mode toggle, plus a Settings row once signed in
+  // dropdown always has the dark-mode toggle plus a Settings row that
+  // opens the settings overlay
   const label=(USER_NAME||USER_EMAIL||'').split('@')[0];
   const initial=UID?(label[0]||'a').toUpperCase():'';
   av.style.backgroundImage='';av.textContent=initial;
@@ -1222,7 +1265,6 @@ function renderAcct(){
     im.src=USER_AVATAR;
   }
   nm.textContent=UID?label:'Settings';
-  if(st)st.style.display=UID?'block':'none';
 }
 const AUTH_READY=(async()=>{
   try{
@@ -1249,6 +1291,51 @@ const THREE_DAYS=3*24*3600*1000;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cleanStem=s=>esc(String(s??'').replace(/\\\((.*?)\\\)/g,' \u2026 ').replace(/\*\*?/g,'').replace(/\[\[(.*?)\]\]/g,'$1').replace(/\s+/g,' ').trim());
 const fmtDate=iso=>new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
+
+/* settings overlay — opens from the bottom-left account chip */
+const SET_OVL=document.getElementById('set-ovl');
+function openSettings(){
+  syncThemeRows();
+  renderSetAcct();
+  document.getElementById('set-mcount').textContent=Object.keys(getFixed()).length;
+  SET_OVL.classList.add('show');
+}
+function closeSettings(){SET_OVL.classList.remove('show');}
+function renderSetAcct(){
+  const el=document.getElementById('set-acct');
+  if(!UID){
+    el.innerHTML='<span class="sa-n" style="font-size:14px">Not signed in yet</span><a class="mini set-act" href="bluebook-practice-test.html#/login">Sign in &rarr;</a>';
+    return;
+  }
+  const label=(USER_NAME||USER_EMAIL||'').split('@')[0];
+  el.innerHTML='<span class="sa-av">'+esc((label[0]||'a').toUpperCase())+'</span>'+
+    '<span><span class="sa-n">'+esc(USER_NAME||label)+'</span><span class="sa-e">'+esc(USER_EMAIL||'')+'</span></span>'+
+    '<button class="mini set-act" id="set-signout">Sign out</button>';
+  const av=el.querySelector('.sa-av');
+  if(USER_AVATAR){
+    const im=new Image();
+    im.onload=()=>{av.style.backgroundImage=`url("${USER_AVATAR}")`;av.textContent='';};
+    im.onerror=()=>{av.style.backgroundImage='';};
+    im.src=USER_AVATAR;
+  }
+  document.getElementById('set-signout').onclick=async()=>{
+    try{await SBC.auth.signOut();}catch(e){}
+    renderAcct();renderSetAcct();
+    toast('SIGNED OUT');
+  };
+}
+document.getElementById('close-set').onclick=closeSettings;
+SET_OVL.addEventListener('click',e=>{if(e.target===SET_OVL)closeSettings();});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&SET_OVL.classList.contains('show'))closeSettings();});
+document.querySelectorAll('#set-theme .xrow').forEach(r=>r.addEventListener('click',()=>setMode(r.dataset.theme)));
+document.getElementById('clear-fixed').onclick=()=>{
+  setFixed({});
+  document.getElementById('set-mcount').textContent='0';
+  renderShelf({});
+  toast('TUCKED-AWAY MISTAKES CLEARED');
+};
+document.getElementById('acct').addEventListener('click',()=>{if(!UID)openSettings();});
+document.getElementById('acct-settings').addEventListener('click',e=>{e.stopPropagation();openSettings();});
 
 let M_PAYLOADS={};
 function renderShelf(fixed){
