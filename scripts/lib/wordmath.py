@@ -60,6 +60,47 @@ def _brace_y(y: str) -> str:
     return f'{{{y}}}'
 
 
+# --- glued-command repair ------------------------------------------------------
+
+# LaTeX commands that legitimately appear in the bank — never split these.
+COMMANDS = frozenset('''
+left right bigl bigr big Big bigg Bigg leq geq neq le ge cdot times div pm mp
+pi theta alpha beta gamma delta sigma phi omega mu lambda tau rho kappa
+epsilon zeta eta iota nu xi chi psi upsilon varphi vartheta varepsilon
+approx infty sin cos tan sec csc cot arcsin arccos arctan sinh cosh tanh
+log ln lg lim limits min max deg arg det gcd frac dfrac tfrac sqrt overline
+underline hat bar vec dot ddot tilde prime circ bullet ast star dagger
+ddagger hbar ell Re Im aleph wp top bot emptyset varnothing angle
+measuredangle triangle equiv sim simeq cong propto prec succ preceq succeq
+ll gg subset supset subseteq supseteq sqsubseteq sqsupseteq in ni cup cap
+setminus backslash forall exists neg land lor vee wedge oplus ominus otimes
+perp parallel nparallel mid nmid therefore because dots ldots cdots vdots
+ddots text textbf textit textrm textsf texttt mathrm mathbf mathit mathsf
+mathtt mathcal mathbb mathfrak overbrace underbrace overset underset
+stackrel binom dbinom tbinom sum prod int iint iiint oint point partial
+nabla surd coprod bigcup bigcap bigoplus bigotimes bigodot bigvee bigwedge
+bigsqcup biguplus uplus sqcap sqcup wr diamond triangleleft triangleright
+triangleq coloneq coloneqq eqqcolon defeq doteq doteqdot risingdotseq
+fallingdotseq hspace vspace quad qquad displaystyle textstyle scriptstyle
+scriptscriptstyle nonumber tag label ref eqref begin end bbox color
+textcolor colorbox fcolorbox mathop mathrel mathbin mathord mathopen
+mathclose mathinner operatorname boldsymbol pmb meta mod pmod bmod pod
+'''.split())
+
+GLUED_RX = re.compile(r'\\([a-zA-Z]+)')
+_COMMANDS_BY_LENGTH = sorted(COMMANDS, key=len, reverse=True)
+
+
+def _unglue(m: re.Match) -> str:
+    word = m.group(1)
+    if word in COMMANDS:
+        return m.group(0)
+    for cmd in _COMMANDS_BY_LENGTH:
+        if word.startswith(cmd) and len(word) > len(cmd):
+            return '\\' + cmd + ' ' + word[len(cmd):]
+    return m.group(0)
+
+
 def clean_math(seg: str) -> str:
     s = seg
 
@@ -86,6 +127,14 @@ def clean_math(seg: str) -> str:
     s = re.sub(r'(?i)\bequal to\b', '=', s)
     s = re.sub(r'(?i)\bdot dot dot\b', r'\\dots', s)
     s = re.sub(r'(?i)\bpercent\b', r'\\%', s)
+    # currency in math mode: "$14,000" -> "\$14,000"; bare "%" -> "\%"
+    s = re.sub(r'(?<!\\)\$', r'\\$', s)
+    s = re.sub(r'(?<!\\)%', r'\\%', s)
+    # glued commands: "-15\lea\le7" -> "-15 \le a \le 7", "14\cdotx" ->
+    # "14 \cdot x", "V=\pir^{2}h" -> "V=\pi r^{2}h". Whole-word scan:
+    # anything already a known LaTeX command (\leq, \times, \frac…) is left
+    # alone; an unknown word gets its longest known prefix split off.
+    s = GLUED_RX.sub(_unglue, s)
 
     # 3. spoken fractions -> \frac{n}{d} (before "raised to one fourth power")
     for phrase in sorted(FRAC_WORDS, key=len, reverse=True):
@@ -246,14 +295,22 @@ def clean_math(seg: str) -> str:
     for unit in UNITS:
         s = re.sub(rf'(?i)\b{unit}\b', rf'\\text{{ {unit}}}', s)
 
-    # 13. brace balance: strip unmatched trailing '}'s left by slipped parens
+    # 13. nested \frac{\sqrt{A}{B}} family — the numerator's closing brace
+    # slipped out: "\frac{\sqrt{y}{\sqrt[3]{x^{2}}}}" -> "\frac{\sqrt{y}}{\sqrt[3]{x^{2}}}"
+    # (must run BEFORE the balance strip, which would eat the evidence)
+    _NEST2 = r'(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*'
+    s = re.sub(
+        r'\\frac\{(((?:[^{}]|\{[^{}]*\})*?)\\sqrt\{[^{}]*)\}\{(' + _NEST2 + r')\}\}?',
+        lambda m: '\\frac{' + m.group(1) + '}}{' + m.group(3) + '}', s)
+
+    # 14. brace balance: strip unmatched trailing '}'s left by slipped parens
     if s.count('}') > s.count('{'):
         excess = s.count('}') - s.count('{')
         while excess > 0 and s.rstrip().endswith('}'):
             s = s.rstrip()[:-1]
             excess -= 1
 
-    # 14. tidy spacing
+    # 15. tidy spacing
     s = re.sub(r'[ \t]+', ' ', s)
     s = re.sub(r'\{ ', '{', s)
     s = re.sub(r' \}', '}', s)
@@ -262,9 +319,37 @@ def clean_math(seg: str) -> str:
 
 MATH_SEG_RE = re.compile(r'\\\((.+?)\\\)', re.S)
 
+# Slipped delimiters from the harvest: "10\(^{5}" or "(*a* + *c*)\(^{3}" —
+# the "\(" landed between a base and its exponent instead of before the base,
+# leaving every later segment mispaired. Pull the preceding token (a paren
+# group or a word/number) inside and close right after the exponent.
+SLIP_RE = re.compile(r'(\((?:[^()]|\([^()]*\))*\)|\*[\w. ]+\*|[\w.*]+)\\\(\^\{([^{}]+)\}')
+
+
+def _unslip(m: re.Match) -> str:
+    base = m.group(1).replace('*', '')
+    # the base may wrap an already-repaired segment: "(\(X\))" -> "(X)"
+    inner = re.fullmatch(r'\(\\\((.*?)\\\)\)', base, re.S)
+    if inner:
+        base = '(' + inner.group(1) + ')'
+    exp = m.group(2).replace('*', '')
+    return '\\(' + base + '^{' + exp + '}\\)'
+
 
 def clean_text(text: str) -> str:
     """Apply clean_math to every \\(...\\) segment in a content string."""
+    # stray asterisks jammed against a slipped exponent marker: "*p**\(^{2}"
+    text = re.sub(r'\*+(?=\\\(\^)', '', text)
+    while True:
+        unslipped = SLIP_RE.sub(_unslip, text)
+        if unslipped == text:
+            break
+        text = unslipped
+    # nested math delimiters: "\((\(\theta\) – 27)^{2}\)" -> "\((\theta – 27)^{2}\)"
+    text = re.sub(r'\\\(\(\\\(([^()]+?)\\\)', r'\\((\1', text)
+    # stray italic marker glued to a math segment: "*\(x^{2}" -> "\(x^{2}\)"
+    # (but keep the intentional *\(x\)* italic-wrapped math)
+    text = re.sub(r'\*\\\(([^()]+?)\\\)(?!\*)', r'\\(\1\\)', text)
     return MATH_SEG_RE.sub(lambda m: '\\(' + clean_math(m.group(1)) + '\\)', text)
 
 
