@@ -7,7 +7,7 @@ import TransitionScreen from '../components/TransitionScreen'
 import BreakScreen from '../components/BreakScreen'
 import ResultsScreen from '../components/ResultsScreen'
 import LockScreen from '../components/LockScreen'
-import { assembleTest, fetchBank, isCorrect, postEvents, selectQuestions, type SourceKind, type TestFocus } from '../data/live'
+import { assembleTest, fetchBank, fetchPracticeTest, fetchPracticeTestLabels, isCorrect, MODULE2_HARD_THRESHOLD, postEvents, selectQuestions, type PracticeTest, type SourceKind, type TestFocus } from '../data/live'
 import { clearCalcState } from '../lib/desmos'
 import { probeApi, reportQuestionError } from '../lib/reviewApi'
 import type { ExamModule } from '../types/exam'
@@ -26,8 +26,13 @@ export default function Home() {
     focusParam === 'math' || focusParam === 'math-section' || focusParam === 'rw' || focusParam === 'rw-section'
       ? focusParam
       : null
+  // ?test=A3 pins a specific pre-built practice test (otherwise the
+  // start-screen dropdown decides; random in the series when unset)
+  const urlTestLabel = searchParams.get('test') ?? undefined
   const [screen, setScreen] = useState<Screen>('start')
   const [test, setTest] = useState<ExamModule[]>([])
+  const [practice, setPractice] = useState<PracticeTest | null>(null)
+  const [testLabels, setTestLabels] = useState<{ A: string[]; B: string[] } | null>(null)
   const [bank, setBank] = useState<Awaited<ReturnType<typeof fetchBank>> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,7 +59,8 @@ export default function Home() {
     }
   }, [])
 
-  // Load the live bank once for the start-screen counts.
+  // Load the live bank once for the start-screen counts, plus the pre-built
+  // practice-test labels for the source dropdowns.
   useEffect(() => {
     let cancelled = false
     fetchBank()
@@ -65,6 +71,11 @@ export default function Home() {
       })
       .catch((err) => !cancelled && setError(`Could not reach the question bank: ${String(err)}`))
       .finally(() => !cancelled && setLoading(false))
+    fetchPracticeTestLabels()
+      .then((l) => {
+        if (!cancelled) setTestLabels(l)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -113,6 +124,28 @@ export default function Home() {
     postEvents(events).catch(() => {})
   }
 
+  /** Adaptive routing: grade module 1 and swap in the easy or hard module 2
+   *  (Princeton Review thresholds: RW ≥ 15/27, Math ≥ 14/22 → harder). */
+  const routeModule2 = (m: ExamModule, ans: Record<string, string>) => {
+    if (!practice) return
+    const section = m.id.startsWith('rw') ? 'rw' : m.id.startsWith('math') ? 'math' : null
+    if (!section || m.difficultyTier !== 'mixed') return
+    const correct = m.questions.filter((q) => {
+      const a = ans[q.id]
+      return a !== undefined && isCorrect(q, a)
+    }).length
+    const hard = correct >= MODULE2_HARD_THRESHOLD[section]
+    setTest((prev) => {
+      const next = [...prev]
+      const variant = section === 'rw'
+        ? hard ? practice.rw2hard : practice.rw2easy
+        : hard ? practice.math2hard : practice.math2easy
+      const idx = next.findIndex((x) => x.id.startsWith(section) && x.difficultyTier !== 'mixed')
+      if (idx >= 0) next[idx] = variant
+      return next
+    })
+  }
+
   useEffect(() => {
     if (!running) return
     const t = window.setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000)
@@ -122,9 +155,14 @@ export default function Home() {
   // Time expired: auto-advance to the transition screen (or submit on the last module).
   useEffect(() => {
     if (!running || secondsLeft !== 0) return
-    if (module) recordModule(module, answers)
+    if (module) {
+      recordModule(module, answers)
+      // Intentional: swap in the routed Module 2 when the clock hits zero
+      // (setTest happens inside routeModule2).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      routeModule2(module, answers)
+    }
     // Intentional: auto-advance the screen when the module clock hits zero.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setScreen(isLastModule ? 'results' : 'transition')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, secondsLeft, isLastModule])
@@ -136,13 +174,30 @@ export default function Home() {
     setScreen('exam')
   }
 
-  const startTest = (source: SourceKind, excludeBluebook: boolean, verifiedOnly: boolean) => {
+  const startTest = (source: SourceKind, excludeBluebook: boolean, verifiedOnly: boolean, pickedLabel?: string) => {
     // Fresh test: the graphing calculator must not carry over any previous work.
     clearCalcState()
     setPendingStart({ source, excludeBluebook, verifiedOnly })
     Promise.resolve(bank ?? fetchBank())
-      .then((b) => {
+      .then(async (b) => {
         setBank(b)
+        // Full runs from a harvested source use a pre-built adaptive test
+        // (series A = question bank, B = bluebook) when one is available.
+        if (!focus && source !== 'generated') {
+          const p = await fetchPracticeTest(b, source === 'bank' ? 'A' : 'B', pickedLabel || urlTestLabel).catch(() => null)
+          if (p) {
+            setPractice(p)
+            // module-2 slots are filled with the hard variant until routing decides
+            setTest([p.rw1, p.rw2hard, p.math1, p.math2hard])
+            setAnswers({})
+            setFlags({})
+            setCrossed({})
+            setError(null)
+            setScreen('intro')
+            return
+          }
+        }
+        setPractice(null)
         const assembled = assembleTest(
           selectQuestions(b, source, excludeBluebook, verifiedOnly),
           focus ?? undefined,
@@ -158,12 +213,15 @@ export default function Home() {
         setError(null)
         setScreen('intro')
       })
-      .catch((err) => setError(`Could not load questions: ${String(err)}`))
-      .finally(() => setPendingStart(null))
-  }
+       .catch((err) => setError(`Could not load questions: ${String(err)}`))
+       .finally(() => setPendingStart(null))
+   }
 
   const submitModule = () => {
-    if (module) recordModule(module, answers)
+    if (module) {
+      recordModule(module, answers)
+      routeModule2(module, answers)
+    }
     setScreen(isLastModule ? 'results' : 'transition')
   }
 
@@ -202,6 +260,7 @@ export default function Home() {
       <StartScreen
         onStart={startTest}
         bank={bank}
+        tests={testLabels}
         loading={loading || pendingStart !== null}
         error={error}
       />
@@ -256,5 +315,5 @@ export default function Home() {
     return <BreakScreen onResume={() => beginModule(BREAK_BEFORE_MODULE)} />
   }
 
-  return <ResultsScreen test={test} answers={answers} onExit={exitToStart} />
+  return <ResultsScreen test={test} answers={answers} testLabel={practice?.label} onExit={exitToStart} />
 }

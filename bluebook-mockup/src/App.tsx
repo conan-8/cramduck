@@ -5,6 +5,7 @@ import { useAuth } from './lib/auth-context'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import ZenScreen from './components/ZenScreen'
+import BreakdownScreen from './components/BreakdownScreen'
 import Review from './pages/Review'
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -76,6 +77,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ZenScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/breakdown"
+          element={
+            <RequireAuth>
+              <BreakdownScreen />
             </RequireAuth>
           }
         />

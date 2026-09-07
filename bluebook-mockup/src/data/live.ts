@@ -499,6 +499,129 @@ export function archetypeCounts(
 
 export type TestFocus = 'math' | 'math-section' | 'rw' | 'rw-section'
 
+// ---------------------------------------------------------------------------
+// Pre-built adaptive practice tests (practice_tests / practice_test_questions,
+// assembled offline by scripts/build-practice-tests.ts). Every test carries
+// six modules: per section, module 1 (mixed) plus BOTH module-2 variants
+// (easy + hard), so the sim can route on module-1 score like the real
+// digital SAT. Series A = question_bank origin, series B = bluebook origin;
+// a bank question appears in at most one test.
+// ---------------------------------------------------------------------------
+
+export type PracticeSeries = 'A' | 'B'
+
+export interface PracticeTest {
+  label: string
+  series: PracticeSeries
+  rw1: ExamModule
+  rw2easy: ExamModule
+  rw2hard: ExamModule
+  math1: ExamModule
+  math2easy: ExamModule
+  math2hard: ExamModule
+}
+
+interface RawPracticeTestRow {
+  id: number
+  label: string
+  series: PracticeSeries
+}
+
+interface RawPracticeQuestionRow {
+  source_id: string
+  section: 'reading-writing' | 'math'
+  module: 1 | 2
+  tier: 'mixed' | 'easy' | 'hard'
+  position: number
+}
+
+/** Module code for a question display ID: RW1/RW2 (module 2 keeps the same
+ *  code whether easy or hard — the route is shown separately). */
+function moduleCode(section: 'reading-writing' | 'math', module: 1 | 2): string {
+  const base = section === 'reading-writing' ? 'RW' : 'M'
+  return `${base}${module}`
+}
+
+/** Load one pre-built practice test and shape it into ExamModules.
+ *  Picks `label` when given, otherwise a random test of the series.
+ *  Returns null when the series has no tests (caller falls back to random
+ *  assembly). Questions come from the already-fetched bank. */
+export async function fetchPracticeTest(
+  bank: { generated: BankQuestion[]; harvested: BankQuestion[] },
+  series: PracticeSeries,
+  label?: string,
+): Promise<PracticeTest | null> {
+  const tests = (await fetchAllPages(
+    `${SUPABASE_URL}/rest/v1/practice_tests?select=id,label,series&series=eq.${series}&order=label`,
+  )) as RawPracticeTestRow[]
+  if (tests.length === 0) return null
+  const test = label ? tests.find((t) => t.label === label) : tests[Math.floor(Math.random() * tests.length)]
+  if (!test) return null
+
+  const rows = (await fetchAllPages(
+    `${SUPABASE_URL}/rest/v1/practice_test_questions?select=source_id,section,module,tier,position&test_id=eq.${test.id}&order=position`,
+  )) as RawPracticeQuestionRow[]
+
+  const byId = new Map(bank.harvested.map((q) => [q.id, q]))
+  const prefix = (list: BankQuestion[], moduleId: string): BankQuestion[] =>
+    list.map((q) => ({ ...q, id: `${moduleId}-${q.id}` }))
+
+  const makeModule = (section: 'reading-writing' | 'math', module: 1 | 2, tier: 'mixed' | 'easy' | 'hard'): ExamModule => {
+    const rw = section === 'reading-writing'
+    const secNo = rw ? 1 : 2
+    const id = `${rw ? 'rw' : 'math'}${module}${module === 1 ? '' : tier === 'easy' ? 'e' : 'h'}`
+    const code = moduleCode(section, module)
+    const questions = rows
+      .filter((r) => r.section === section && r.module === module && r.tier === tier)
+      .map((r): BankQuestion | undefined => {
+        const q = byId.get(r.source_id)
+        return q ? { ...q, displayId: `${test.label}-${code}-Q${r.position}` } : undefined
+      })
+      .filter((q): q is BankQuestion => q !== undefined)
+    return {
+      id,
+      label: `Section ${secNo}, Module ${module}`,
+      title: rw ? 'Reading and Writing' : 'Math',
+      minutes: rw ? 32 : 35,
+      split: rw,
+      difficultyTier: tier,
+      questions: prefix(questions, id),
+    }
+  }
+
+  return {
+    label: test.label,
+    series: test.series,
+    rw1: makeModule('reading-writing', 1, 'mixed'),
+    rw2easy: makeModule('reading-writing', 2, 'easy'),
+    rw2hard: makeModule('reading-writing', 2, 'hard'),
+    math1: makeModule('math', 1, 'mixed'),
+    math2easy: makeModule('math', 2, 'easy'),
+    math2hard: makeModule('math', 2, 'hard'),
+  }
+}
+
+/** Labels of all pre-built practice tests per series (naturally sorted:
+ *  A1, A2, … A10). Powers the start-screen test dropdowns. */
+export async function fetchPracticeTestLabels(): Promise<{ A: string[]; B: string[] }> {
+  const rows = (await fetchAllPages(
+    `${SUPABASE_URL}/rest/v1/practice_tests?select=label,series`,
+  )) as RawPracticeTestRow[]
+  const nat = (a: string, b: string): number => {
+    const na = Number(a.replace(/\D+/g, '')) || 0
+    const nb = Number(b.replace(/\D+/g, '')) || 0
+    return na - nb || a.localeCompare(b)
+  }
+  return {
+    A: rows.filter((r) => r.series === 'A').map((r) => r.label).sort(nat),
+    B: rows.filter((r) => r.series === 'B').map((r) => r.label).sort(nat),
+  }
+}
+
+/** Module-1 score needed to route to the HARDER module 2 — the fixed
+ *  thresholds used by Princeton Review's adaptive practice tests. */
+export const MODULE2_HARD_THRESHOLD: Record<'rw' | 'math', number> = { rw: 15, math: 14 }
+
 /** Build a 4-module digital-SAT-shaped test at real domain ratios.
  *  `focus` narrows the run to one module, or one full section. */
 export function assembleTest(questions: BankQuestion[], focus?: TestFocus): ExamModule[] {

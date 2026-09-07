@@ -87,6 +87,23 @@ The question bank is deliberately partitioned into three kinds:
   **dev-only anon read policy** so the local simulator can show them —
   PRE-LAUNCH TODO: drop that policy.
 
+## Pre-built adaptive practice tests
+
+`practice_tests` + `practice_test_questions` (migrations/007) hold full
+digital-SAT-shaped tests assembled offline from `harvested_questions` by
+`npm run build:tests` (scripts/build-practice-tests.ts, seeded RNG). Each
+test carries SIX modules: per section, module 1 (`tier='mixed'`) plus BOTH
+module-2 variants (`tier='easy'` / `tier='hard'`), so the simulator routes
+to easy/hard module 2 on module-1 score (Princeton Review thresholds:
+RW ≥ 15/27, Math ≥ 14/22). Real format per module: RW 27 questions / 32 min,
+Math 22 / 35 min with ~5 grid-ins; domain quotas follow the official
+blueprint (RW 8/7/7/5, Math 8/8/3/3).
+
+- **Series A** (`origin='question_bank'`) — labels A1…A9
+- **Series B** (`origin='bluebook'`) — labels B1…B13
+- `practice_test_questions.source_id` is globally UNIQUE: zero question
+  reuse across tests. Re-running `build:tests` wipes and rebuilds a series.
+
 ## Simulator / web-client access (PostgREST)
 
 The simulator HTML reads **live from Supabase** with the publishable anon key

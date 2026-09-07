@@ -10,8 +10,10 @@ interface BankData {
 }
 
 interface StartScreenProps {
-  onStart: (source: SourceKind, excludeBluebook: boolean, verifiedOnly: boolean) => void
+  onStart: (source: SourceKind, excludeBluebook: boolean, verifiedOnly: boolean, testLabel?: string) => void
   bank: BankData | null
+  /** Pre-built practice test labels per series (A = bank, B = bluebook). */
+  tests: { A: string[]; B: string[] } | null
   loading: boolean
   error: string | null
 }
@@ -39,15 +41,16 @@ const INFO_ROWS = [
   },
 ]
 
-const SOURCES: Array<{ kind: SourceKind; label: string; blurb: string }> = [
+const SOURCES: Array<{ kind: SourceKind; label: string; blurb: string; series?: 'A' | 'B' }> = [
   { kind: 'generated', label: 'Generated', blurb: 'Original questions written by the Cramduck generator' },
-  { kind: 'bank', label: 'Question Bank', blurb: 'Items from the online College Board question bank' },
-  { kind: 'bluebook', label: 'Bluebook', blurb: 'Bank items that appear in Bluebook practice exams' },
+  { kind: 'bank', label: 'Question Bank', blurb: 'Items from the online College Board question bank', series: 'A' },
+  { kind: 'bluebook', label: 'Bluebook', blurb: 'Bank items that appear in Bluebook practice exams', series: 'B' },
 ]
 
-export default function StartScreen({ onStart, bank, loading, error }: StartScreenProps) {
+export default function StartScreen({ onStart, bank, tests, loading, error }: StartScreenProps) {
   const { user, signOut } = useAuth()
   const [source, setSource] = useState<SourceKind>('generated')
+  const [testLabel, setTestLabel] = useState<Record<SourceKind, string>>({ generated: 'G1', bank: '', bluebook: '' })
   const [excludeBluebook, setExcludeBluebook] = useState(false)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
 
@@ -104,18 +107,40 @@ export default function StartScreen({ onStart, bank, loading, error }: StartScre
                 const active = source === s.kind
                 const n = counts ? counts[s.kind] : null
                 const badge = loading ? '…' : n === null ? '' : `${n} items`
+                const options = s.kind === 'generated'
+                  ? [{ value: 'G1', label: 'G1' }]
+                  : [
+                      { value: '', label: `Random ${s.series} test` },
+                      ...(tests ? tests[s.series!] : []).map((l) => ({ value: l, label: l })),
+                    ]
                 return (
-                  <button
-                    key={s.kind}
-                    type="button"
-                    onClick={() => setSource(s.kind)}
-                    className={active ? 'ps-opt on' : 'ps-opt'}
-                    aria-pressed={active}
-                  >
-                    <span className="n">{s.label}</span>
-                    {badge && <span className="cnt">{badge}</span>}
-                    <span className="d">{s.blurb}</span>
-                  </button>
+                  <div key={s.kind} className="ps-optbox">
+                    <button
+                      type="button"
+                      onClick={() => setSource(s.kind)}
+                      className={active ? 'ps-opt on' : 'ps-opt'}
+                      aria-pressed={active}
+                    >
+                      <span className="n">{s.label}</span>
+                      {badge && <span className="cnt">{badge}</span>}
+                      <span className="d">{s.blurb}</span>
+                    </button>
+                    <select
+                      className="ps-sel"
+                      aria-label={`${s.label} test`}
+                      value={testLabel[s.kind]}
+                      onChange={(e) => {
+                        setSource(s.kind)
+                        setTestLabel((prev) => ({ ...prev, [s.kind]: e.target.value }))
+                      }}
+                    >
+                      {options.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )
               })}
             </div>
@@ -198,7 +223,7 @@ export default function StartScreen({ onStart, bank, loading, error }: StartScre
         <button
           type="button"
           className="ps-btn pri"
-          onClick={() => onStart(source, excludeBluebook, verifiedOnly)}
+          onClick={() => onStart(source, excludeBluebook, verifiedOnly, testLabel[source] || undefined)}
           disabled={loading || empty}
         >
           {loading ? 'Loading…' : 'Start the test →'}

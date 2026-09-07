@@ -31,6 +31,7 @@
     "build:app": "npm run build:sim && npm --prefix bluebook-mockup run build && tsx scripts/sync-app.ts",
     "serve": "tsx --env-file-if-exists=.env scripts/serve.ts",
     "db:check": "tsx --env-file-if-exists=.env scripts/db-check.ts",
+    "build:tests": "tsx --env-file-if-exists=.env scripts/build-practice-tests.ts",
     "db:migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "seed:curated": "tsx --env-file-if-exists=.env scripts/seed-curated.ts"

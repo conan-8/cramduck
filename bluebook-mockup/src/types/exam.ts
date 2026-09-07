@@ -37,6 +37,10 @@ export interface Question {
   imageAsset?: string
   /** Archetype (canonical skill slug) this question belongs to. */
   archetype?: string
+  /** Practice-test display ID — `${testLabel}-${RW1|RW2|M1|M2}-Q${position}`
+   *  (e.g. A2-RW2-Q20). Pre-built adaptive tests only; undefined on random
+   *  runs. Shown on the mistakes/saved page and score breakdowns. */
+  displayId?: string
 }
 
 export interface ExamModule {
@@ -46,5 +50,8 @@ export interface ExamModule {
   minutes: number
   /** Two-pane passage | question layout (Reading & Writing) vs single column (Math). */
   split: boolean
+  /** Adaptive tier — module 1 is 'mixed'; module 2 comes in 'easy' and
+   *  'hard' variants, routed by module-1 score (pre-built practice tests). */
+  difficultyTier?: 'mixed' | 'easy' | 'hard'
   questions: Question[]
 }

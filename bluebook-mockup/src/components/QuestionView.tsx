@@ -5,8 +5,9 @@ import AnswerOptions from './AnswerOptions'
 import DiagramPlaceholder from './DiagramPlaceholder'
 import RichText from './RichText'
 
-/** Table stimulus (two-way frequency tables, data tables). */
-function TableFigure({ table }: { table: TableSpec }) {
+/** Table stimulus (two-way frequency tables, data tables). Exported for the
+ *  read-only breakdown view. */
+export function TableFigure({ table }: { table: TableSpec }) {
   return (
     <figure className="mx-auto my-6 w-full max-w-[520px] overflow-hidden rounded-lg border border-[#b9bec9] bg-white px-5 py-4">
       {table.caption && (

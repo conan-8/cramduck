@@ -5,6 +5,7 @@
  *
  *   bluebook-mockup/dist/index.html    -> cramduck-mockup/bluebook-practice-test.html
  *   bluebook-mockup/dist/renderers.js  -> cramduck-mockup/renderers.js
+ *   bluebook-mockup/dist/favicon.png   -> cramduck-mockup/favicon.png
  *   bluebook-mockup/dist/assets/*      -> cramduck-mockup/assets/
  *   research/sat/assets/ssqb-*.png     -> cramduck-mockup/assets/
  *
@@ -78,6 +79,13 @@ function main(): void {
   // Step 2: renderer bundle
   const renderersCopied = copyIfChanged(path.join(DIST_DIR, 'renderers.js'), path.join(DEST_DIR, 'renderers.js'));
   console.log(`sync-app: dist/renderers.js -> cramduck-mockup/renderers.js (${renderersCopied ? 'copied' : 'unchanged'})`);
+
+  // Step 2b: favicon (tab icon for the simulator page)
+  const faviconSrc = path.join(DIST_DIR, 'favicon.png');
+  if (fs.existsSync(faviconSrc)) {
+    const faviconCopied = copyIfChanged(faviconSrc, path.join(DEST_DIR, 'favicon.png'));
+    console.log(`sync-app: dist/favicon.png -> cramduck-mockup/favicon.png (${faviconCopied ? 'copied' : 'unchanged'})`);
+  }
 
   // Step 3: mirror dist/assets/
   const distAssetNames = fileNames(path.join(DIST_DIR, 'assets'));

@@ -2,12 +2,15 @@ import { useMemo } from 'react'
 import type { ExamModule, Question } from '../types/exam'
 import { isCorrect } from '../data/live'
 import RichText from './RichText'
+import { openBreakdown } from '../lib/breakdown'
 
 const CONFETTI_COLORS = ['#f7d54d', '#f48fb1', '#80deea', '#ffffff', '#ffcc80']
 
 interface ResultsScreenProps {
   test: ExamModule[]
   answers: Record<string, string>
+  /** Pre-built practice test label (A2, B3, …) — absent on random runs. */
+  testLabel?: string
   onExit: () => void
 }
 
@@ -72,7 +75,7 @@ function QuestionReview({ q, number, answer }: { q: Question; number: number; an
   )
 }
 
-export default function ResultsScreen({ test, answers, onExit }: ResultsScreenProps) {
+export default function ResultsScreen({ test, answers, testLabel, onExit }: ResultsScreenProps) {
   const confetti = useMemo(
     () =>
       Array.from({ length: 40 }, (_, i) => ({
@@ -162,18 +165,52 @@ export default function ResultsScreen({ test, answers, onExit }: ResultsScreenPr
         {/* Question-by-question review with rationales */}
         <section className="mt-12 w-full max-w-3xl" aria-label="Question review">
           <h2 className="text-center text-[22px] font-bold">Answer key &amp; explanations</h2>
-          {test.map((m) => (
+          {test.map((m) => {
+            const moduleCorrect = m.questions.filter((q) => {
+              const a = answers[q.id]
+              return a !== undefined && a.trim() !== '' && isCorrect(q, a)
+            }).length
+            const route =
+              m.difficultyTier === 'easy'
+                ? ' · routed to the easier Module 2'
+                : m.difficultyTier === 'hard'
+                  ? ' · routed to the harder Module 2'
+                  : ''
+            const openModuleBreakdown = () =>
+              openBreakdown({
+                testLabel,
+                moduleLabel: m.label,
+                title: m.title,
+                tier: m.difficultyTier,
+                minutes: m.minutes,
+                questions: m.questions.map((q, i) => ({
+                  displayId: q.displayId ?? `Q${i + 1}`,
+                  question: q,
+                  answer: answers[q.id],
+                })),
+              })
+            return (
             <div key={m.id} className="mt-8">
               <p className="mb-3 text-center text-[12px] font-semibold uppercase tracking-[1.4px] text-[#c9cede]">
-                {m.label} · {m.title}
+                {m.label} · {m.title} · {moduleCorrect}/{m.questions.length} correct{route}
               </p>
+              <div className="mb-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={openModuleBreakdown}
+                  className="rounded-full border border-[#4a5170] px-5 py-2 text-[12px] font-bold uppercase tracking-[1.2px] text-white hover:border-[#f7d54d] hover:text-[#f7d54d]"
+                >
+                  Open breakdown ↗
+                </button>
+              </div>
               <div className="overflow-hidden rounded-2xl border border-[#d6d9de] bg-white text-[#1c1c1e] shadow-sm">
                 {m.questions.map((q, i) => (
                   <QuestionReview key={q.id} q={q} number={i + 1} answer={answers[q.id]} />
                 ))}
               </div>
             </div>
-          ))}
+            )
+          })}
           {total === 0 && (
             <p className="mt-6 text-center text-sm text-[#c9cede]">No questions in this run.</p>
           )}

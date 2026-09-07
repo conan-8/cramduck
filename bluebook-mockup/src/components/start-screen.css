@@ -210,6 +210,29 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
 }
+.ps-optbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* smaller box inside each source box: the test dropdown */
+.ps-sel {
+  width: 100%;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--sheet);
+  color: inherit;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+.ps-sel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .ps-opt {
   position: relative;
   display: flex;

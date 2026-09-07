@@ -13,19 +13,19 @@ body[data-mode="light"]{
   --paper:#f7f2e6; --sheet:#fffdf4; --ink:#28231a; --muted:#8d8371;
   --line:#ddd3bd; --accent:#2979ff; --right:#58cc02; --wrong:#ff4b4b; --info:#1cb0f6;
   --grain-op:.07; --rule:rgba(141,131,113,.16); --shadow:#28231a; --side:#f2ecdd;
-  --note1:#fff0a3; --note2:#ffd9e0; --note3:#d7ebff; --note4:#dff6d2; --tape:rgba(238,228,196,.78);
+  --note1:#fff0a3; --note2:#ffd9e0; --note3:#d7ebff; --note4:#dff6d2; --tape:rgba(238,228,196,.78); --notetape:rgba(238,228,196,.78);
 }
 body[data-mode="dark"]{
   --paper:#1d1915; --sheet:#29241e; --ink:#f1eadd; --muted:#9a8f7c;
   --line:#453e33; --accent:#5c9dff; --right:#7bd94a; --wrong:#ff6b6b; --info:#4fc3f7;
   --grain-op:.1; --rule:rgba(241,234,221,.09); --shadow:#000; --side:#221e19;
-  --note1:#4a3f26; --note2:#463037; --note3:#2f3d4c; --note4:#33452d; --tape:rgba(241,234,221,.16);
+  --tape:rgba(241,234,221,.16); --notetape:rgba(238,228,196,.78);
 }
 body[data-mode="blueprint"]{
   --paper:#123054; --sheet:#163a66; --ink:#d5e8f8; --muted:#84abc9;
   --line:rgba(111,198,255,.4); --accent:#6fc6ff; --right:#4ade80; --wrong:#ff7a7a; --info:#6fc6ff;
   --grain-op:.05; --rule:rgba(111,198,255,.12); --shadow:#0a1f38; --side:#0f2a49;
-  --note1:rgba(111,198,255,.15); --note2:rgba(158,217,255,.09); --note3:rgba(74,222,128,.13); --note4:rgba(255,122,122,.13); --tape:rgba(111,198,255,.22);
+  --note1:rgba(111,198,255,.15); --note2:rgba(158,217,255,.09); --note3:rgba(74,222,128,.13); --note4:rgba(255,122,122,.13); --tape:rgba(111,198,255,.22); --notetape:rgba(111,198,255,.22);
 }
 
 /* ============ BASE ============ */
@@ -69,6 +69,16 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 .navbox{border:1.5px solid var(--line);border-radius:6px;padding:8px;margin-top:4px;background:color-mix(in srgb,var(--sheet) 55%,transparent)}
 .navbox .nb-t{font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin:4px 6px 6px}
 .navbox .navgrp{margin:0}
+/* chat lives in its own little box — always glowing inward from the edges,
+   with a brighter spot that follows the cursor around the sidebar */
+.navbox-chat{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--accent) 50%,var(--line));
+  box-shadow:inset 0 0 18px -5px color-mix(in srgb,var(--accent) 55%,transparent),
+             inset 0 0 6px -1px color-mix(in srgb,var(--accent) 30%,transparent),
+             inset 0 0 calc(34px * var(--glow,0)) -6px color-mix(in srgb,var(--accent) 60%,transparent)}
+.navbox-chat::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%);
+  opacity:var(--glow,0);transition:opacity .25s}
+.navbox-chat button{position:relative;z-index:1}
 .nav button:hover{border-color:var(--ink);color:var(--ink);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
 .nav button.on{background:var(--ink);color:var(--sheet);border-color:var(--ink);box-shadow:3px 3px 0 var(--accent)}
 .nav button .bdg{font-size:9px;padding:2px 6px;border:1px solid currentColor;border-radius:2px}
@@ -147,7 +157,7 @@ body[data-mode="blueprint"] .switch-row,body[data-mode="blueprint"] .drop-link{c
 .stat:nth-child(2){transform:rotate(.9deg);background:var(--note2)}
 .stat:nth-child(3){transform:rotate(-.7deg);background:var(--note3)}
 .stat:nth-child(4){transform:rotate(1.2deg);background:var(--note4)}
-.stat::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-1.5deg);width:72px;height:20px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.15);clip-path:polygon(0 18%,5% 0,95% 0,100% 18%,100% 82%,95% 100%,5% 100%,0 82%)}
+.stat::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-1.5deg);width:72px;height:20px;background:var(--notetape);box-shadow:0 1px 3px rgba(0,0,0,.15);clip-path:polygon(0 18%,5% 0,95% 0,100% 18%,100% 82%,95% 100%,5% 100%,0 82%)}
 .stat:hover{transform:rotate(0) scale(1.04);box-shadow:0 3px 4px rgba(0,0,0,.15),0 18px 32px -12px rgba(0,0,0,.42);z-index:2}
 .stat .l{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink)}
 .stat .v{display:inline-block;font-family:'Sora',sans-serif;font-weight:800;font-size:38px;line-height:1.05;margin-top:8px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -159,8 +169,7 @@ body[data-mode="blueprint"] .switch-row,body[data-mode="blueprint"] .drop-link{c
 .stat.or{background:#ffd9a1}
 .stat.rd{background:#ffc9c4}
 #st-improved{background:var(--note4)}
-body[data-mode="dark"] .stat.or{background:#4a3a26}
-body[data-mode="dark"] .stat.rd{background:#4a2c28}
+body[data-mode="dark"] .stat{color:#28231a;--ink:#28231a;--muted:#8d8371;--accent:#2979ff;--right:#58cc02;--wrong:#ff4b4b;--info:#1cb0f6}
 body[data-mode="blueprint"] .stat.or{background:rgba(255,150,60,.18)}
 body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .stat .v+em{font-style:normal;font-family:'Sora',sans-serif;font-weight:600;font-size:19px;color:var(--muted)}
@@ -350,6 +359,9 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .zc-opt .n{font-family:'Sora',sans-serif;font-weight:700;font-size:14px}
 .zc-opt .d{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .zc-opt.on .d{color:color-mix(in srgb,var(--sheet) 65%,transparent)}
+#sim-sat .zc-opt .d{color:var(--ink);text-transform:none;letter-spacing:.04em;font-size:11px}
+#sim-sat .zc-opt.on .d{color:color-mix(in srgb,var(--sheet) 75%,transparent)}
+#sim-sat .zc-opt .m{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;line-height:1.1;color:var(--accent);margin-top:3px}
 .ans{display:flex;align-items:center;gap:12px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);padding:13px 16px;margin-bottom:10px;cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s;font-size:14.5px;font-weight:600}
 .ans .k{font-family:'Space Mono',monospace;font-size:10px;border:1.5px solid currentColor;border-radius:2px;padding:2px 7px;flex:none}
 .ans:hover{transform:translateX(6px);box-shadow:-4px 4px 0 var(--accent)}
@@ -369,15 +381,18 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .simrec{display:flex;align-items:center;gap:26px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);box-shadow:4px 4px 0 var(--shadow);padding:20px 24px;flex-wrap:wrap;transition:transform .18s,box-shadow .18s}
 .simrec:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--shadow)}
 .simrec .sr-main{flex:1;min-width:250px}
-.simrec .sr-st{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.simrec .sr-st{font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
 .simrec .sr-st.done{color:var(--right)}
-.simrec h3{font-family:'Fraunces',serif;font-weight:900;font-size:21px;margin:6px 0 4px;letter-spacing:-.01em}
+.simrec h3{font-family:'Fraunces',serif;font-weight:900;font-size:28px;margin:0 0 5px;letter-spacing:-.015em;color:var(--ink)}
 .simrec .sr-meta{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
 .simrec:hover .mods i{border-color:var(--ink);color:var(--ink)}
 .simrec:hover .mods i.done{border-color:var(--right);color:#fff}
-.simrec .sr-score{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--accent);flex:none}
-.simrec .sr-score small{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0}
-.simrec .sr-score.none{color:var(--muted)}
+.simrec .sr-score{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
+.simrec .sr-score .sat{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-.02em;color:var(--accent)}
+.simrec .sr-score .sat small{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:0}
+.simrec .sr-score .acc{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.simrec .sr-score .acc span{color:var(--muted);font-weight:400}
+.simrec .sr-score.none .sat{color:var(--muted)}
 .scorewrap{display:flex;gap:34px;align-items:center;flex-wrap:wrap}
 .bignum{font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(64px,7vw,96px);line-height:1;letter-spacing:-.04em;color:var(--accent)}
 .bignum small{font-size:.28em;color:var(--muted);font-weight:600;letter-spacing:0}
@@ -489,14 +504,15 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 
 /* ============ CHAT ============ */
 /* chat fills the viewport exactly — only the log scrolls, never the page */
-#v-chat.on{display:flex;flex-direction:column;height:calc(100dvh - 260px);min-height:420px}
+#v-chat.on{display:flex;flex-direction:column;height:calc(100dvh - 326px);min-height:420px}
 #v-chat .vh{margin-bottom:16px;flex:none}
+.chat-tools{flex:none;margin-bottom:14px}
 #v-chat .vh h1{font-size:clamp(30px,3.2vw,44px)}
 #v-chat .panel{flex:1;display:flex;flex-direction:column;min-height:0;height:auto}
 #v-chat>.mnote{display:none}
 #v-chat .panel .pb{flex:1;display:flex;flex-direction:column;min-height:0}
 .chat-log{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:4px 2px 18px;overflow-y:auto}
-@media(max-width:980px){#v-chat{height:calc(100dvh - 330px);min-height:380px}}
+@media(max-width:980px){#v-chat{height:calc(100dvh - 386px);min-height:380px}.chat-tools .btn{padding:10px 18px;font-size:13px}}
 .msg{max-width:80%;padding:12px 15px;border-radius:3px;font-size:14.5px;line-height:1.65;font-family:'Sora',sans-serif;animation:msgin .28s cubic-bezier(.16,1,.3,1)}
 @keyframes msgin{from{opacity:0;transform:translateY(8px)}}
 .msg .who{display:block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:6px}
@@ -532,6 +548,43 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 .chat-widget .cw-m{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:3px}
 .chat-widget .cw-go{margin-left:auto;white-space:nowrap}
 
+/* ---- chat history drawer — a sheet of paper taped onto the chat panel ---- */
+.chat-hist-bd{position:absolute;inset:0;background:rgba(20,16,10,.22);opacity:0;pointer-events:none;transition:opacity .3s;z-index:11;border-radius:3px}
+.chat-hist-bd.show{opacity:1;pointer-events:auto}
+.chat-hist{position:absolute;top:0;bottom:0;left:0;width:min(330px,92%);z-index:12;pointer-events:none;
+  transform:translateX(-104%);transition:transform .4s cubic-bezier(.16,1,.3,1);
+  filter:drop-shadow(12px 0 20px rgba(0,0,0,.3))}
+.chat-hist.open{transform:none;pointer-events:auto}
+.chh-paper{position:absolute;inset:0;background:var(--sheet);display:flex;flex-direction:column;gap:12px;padding:16px 22px 16px 18px;
+  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 2%,calc(100% - 9px) 4%,100% 6%,calc(100% - 6px) 8%,calc(100% - 10px) 10%,100% 12%,calc(100% - 8px) 14%,100% 16%,calc(100% - 7px) 18%,100% 20%,calc(100% - 10px) 22%,100% 24%,calc(100% - 6px) 26%,100% 28%,calc(100% - 9px) 30%,100% 32%,calc(100% - 7px) 34%,100% 36%,calc(100% - 10px) 38%,100% 40%,calc(100% - 6px) 42%,100% 44%,calc(100% - 9px) 46%,100% 48%,calc(100% - 7px) 50%,100% 52%,calc(100% - 10px) 54%,100% 56%,calc(100% - 6px) 58%,100% 60%,calc(100% - 9px) 62%,100% 64%,calc(100% - 7px) 66%,100% 68%,calc(100% - 10px) 70%,100% 72%,calc(100% - 6px) 74%,100% 76%,calc(100% - 9px) 78%,100% 80%,calc(100% - 7px) 82%,100% 84%,calc(100% - 10px) 86%,100% 88%,calc(100% - 6px) 90%,100% 92%,calc(100% - 9px) 94%,100% 96%,calc(100% - 7px) 98%,calc(100% - 5px) 100%,0 100%)}
+.chh-rules{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 27px,var(--rule) 27px 28px);
+  clip-path:inherit}
+.chh-tape{position:absolute;width:74px;height:20px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.15);pointer-events:none;z-index:2;
+  clip-path:polygon(0 18%,5% 0,95% 0,100% 18%,100% 82%,95% 100%,5% 100%,0 82%)}
+.chh-tape.t1{top:-9px;left:26px;transform:rotate(-2.5deg)}
+.chh-tape.t2{top:96px;right:-17px;transform:rotate(9deg)}
+.chh-tape.t3{bottom:70px;right:-15px;transform:rotate(-7deg)}
+.chh-head{display:flex;justify-content:space-between;align-items:center;flex:none;position:relative}
+.chh-head .chh-t{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.chh-x{font-size:20px;line-height:1;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 6px;transition:color .12s,transform .12s}
+.chh-x:hover{color:var(--wrong);transform:rotate(90deg)}
+.chh-search{flex:none;width:100%;font-family:'Sora',sans-serif;font-size:13.5px;padding:10px 12px;border:1.5px solid var(--ink);border-radius:3px;background:var(--paper);color:var(--ink);outline:none;transition:box-shadow .15s;position:relative}
+.chh-search:focus{box-shadow:3px 3px 0 var(--accent)}
+.chh-search::placeholder{color:var(--muted)}
+.chh-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;position:relative;padding-bottom:4px}
+.chh-empty{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 4px;text-align:center;line-height:1.8}
+.chh-empty a{color:var(--accent)}
+.chh-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border:1.5px solid transparent;border-radius:3px;background:transparent;cursor:pointer;font-family:'Sora',sans-serif;transition:all .12s}
+.chh-item:hover{border-color:var(--ink);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--accent)}
+.chh-item.on{border-color:var(--ink);background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.chh-item .ci-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.chh-item .ci-t{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chh-item .ci-m{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.chh-item .ci-d{flex:none;font-size:15px;line-height:1;color:var(--muted);background:transparent;border:none;cursor:pointer;padding:4px 5px;border-radius:2px;opacity:0;transition:opacity .12s,color .12s}
+.chh-item:hover .ci-d{opacity:1}
+.chh-item .ci-d:hover{color:var(--wrong)}
+.chh-new{flex:none;position:relative;text-align:center}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -546,7 +599,9 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
         <div class="nb-t">Overview</div>
         <button class="on" data-view="today">Today <span class="bdg">23</span></button>
         <button data-view="stats">Stats</button>
-        <button data-view="chat">Chat <span class="bdg">AI</span></button>
+      </div>
+      <div class="navbox navbox-chat" id="navbox-chat">
+        <button data-view="chat">Chat</button>
       </div>
       <div class="navbox">
         <div class="nb-t">Practice</div>
@@ -626,7 +681,26 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
         <div class="vh">
           <h1>Ask <em>the coach</em></h1>
         </div>
+        <div class="chat-tools">
+          <button class="btn sec" type="button" id="chat-hist-btn">&#9776; Chat history</button>
+        </div>
         <div class="panel">
+          <div class="chat-hist-bd" id="chat-hist-bd"></div>
+          <div class="chat-hist" id="chat-hist" aria-hidden="true" aria-label="Chat history">
+            <div class="chh-paper">
+              <div class="chh-rules"></div>
+              <div class="chh-head">
+                <span class="chh-t">History</span>
+                <button class="chh-x" type="button" id="chat-hist-close" aria-label="Close history">&times;</button>
+              </div>
+              <input class="chh-search" id="chat-hist-search" placeholder="search chats&hellip;" autocomplete="off" />
+              <div class="chh-list" id="chat-hist-list"></div>
+              <button class="btn pri chh-new" type="button" id="chat-hist-new">+ New chat</button>
+            </div>
+            <span class="chh-tape t1"></span>
+            <span class="chh-tape t2"></span>
+            <span class="chh-tape t3"></span>
+          </div>
           <div class="ph"><span class="t">Coach <b>&middot; deepseek v4 flash</b></span></div>
           <div class="pb">
             <div class="chat-log" id="chat-log"></div>
@@ -780,11 +854,11 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
             <div class="ph"><span class="t">Configure a run <b>&middot; pick one</b></span><span class="t">TIMED &middot; BLUEBOOK-STYLE</span></div>
             <div class="pb">
               <div class="zc-grid">
-                <button class="zc-opt" data-sc="math"><span class="n">Math module</span><span class="d">1 module &middot; 35 min &middot; 22 questions</span></button>
-                <button class="zc-opt" data-sc="math-section"><span class="n">Math section</span><span class="d">2 modules &middot; 1h 10m &middot; 44 questions</span></button>
-                <button class="zc-opt" data-sc="rw"><span class="n">Reading &amp; Writing module</span><span class="d">1 module &middot; 32 min &middot; 27 questions</span></button>
-                <button class="zc-opt" data-sc="rw-section"><span class="n">Reading &amp; Writing section</span><span class="d">2 modules &middot; 1h 4m &middot; 54 questions</span></button>
-                <button class="zc-opt on" data-sc="full"><span class="n">Full exam</span><span class="d">4 modules &middot; 2h 14m &middot; 98 questions</span></button>
+                <button class="zc-opt" data-sc="math"><span class="n">Math module</span><span class="d">1 module, 22 questions</span><span class="m">35 mins</span></button>
+                <button class="zc-opt" data-sc="math-section"><span class="n">Math section</span><span class="d">2 modules, 44 questions</span><span class="m">1h 10m</span></button>
+                <button class="zc-opt" data-sc="rw"><span class="n">Reading &amp; Writing module</span><span class="d">1 module, 27 questions</span><span class="m">32 mins</span></button>
+                <button class="zc-opt" data-sc="rw-section"><span class="n">Reading &amp; Writing section</span><span class="d">2 modules, 54 questions</span><span class="m">1h 4m</span></button>
+                <button class="zc-opt on" data-sc="full"><span class="n">Full exam</span><span class="d">4 modules, 98 questions</span><span class="m">2h 14m</span></button>
               </div>
               <div style="display:flex;gap:14px;flex-wrap:wrap">
                 <button class="btn pri" id="sim-start">Launch the simulator &rarr;</button>
@@ -1134,6 +1208,17 @@ function simStats(s){
   return out;
 }
 const simDur=t=>{if(t<60000)return Math.max(1,Math.round(t/1000))+' SEC';const m=Math.round(t/60000);return m>=60?Math.floor(m/60)+'H '+(m%60)+'M':m+' MIN';};
+/* linear raw→scaled approximation: each section maps 0–100% onto 200–800,
+   a full test (both sections present) sums to /1600, a single section is /800 */
+const simSecScale=o=>o&&o.a?Math.max(200,Math.min(800,Math.round((200+o.c/o.a*600)/10)*10)):0;
+function simScaled(st){
+  const rw=st.sec.rw,ma=st.sec.math;
+  if(rw&&ma)return{score:simSecScale(rw)+simSecScale(ma),max:1600,scope:'FULL TEST'};
+  if(ma)return{score:simSecScale(ma),max:800,scope:'MATH MODULE'};
+  if(rw)return{score:simSecScale(rw),max:800,scope:'R&W MODULE'};
+  return{score:st.a?Math.round(st.c/st.a*1600):0,max:1600,scope:'PRACTICE'};
+}
+const fmtDateBig=iso=>new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase();
 async function loadSim(){
   await AUTH_READY;
   const recs=document.getElementById('simrecs'),rep=document.getElementById('score-report');
@@ -1173,12 +1258,15 @@ async function loadSim(){
   }
   recs.innerHTML=sessions.map((s,i)=>{
     const st=simStats(s);
+    const sc=simScaled(st);
     const chips=['math','rw'].filter(k=>st.sec[k]).map(k=>'<i class="done">'+(k==='math'?'MATH':'R&amp;W')+' \u00b7 '+st.sec[k].a+'</i>').join('');
-    return '<div class="simrec"><div class="sr-main"><span class="sr-st done">'+SIM_MODE[s.mode]+' \u00b7 COMPLETED</span>'+
-      '<h3>'+esc(SIM_TITLE[s.mode])+'</h3>'+
-      '<div class="sr-meta">'+fmtDate(new Date(s.start).toISOString())+' \u00b7 '+simDur(st.time)+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+'</div>'+
+    return '<div class="simrec"><div class="sr-main">'+
+      '<h3>'+fmtDateBig(new Date(s.start).toISOString())+'</h3>'+
+      '<div class="sr-st done">'+SIM_MODE[s.mode]+'</div>'+
+      '<div class="sr-meta">'+sc.scope+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+' \u00b7 '+simDur(st.time)+'</div>'+
       '<div class="mods">'+chips+'</div></div>'+
-      '<div class="sr-score">'+st.acc+'<small>% \u00b7 '+st.c+'/'+st.a+'</small></div>'+
+      '<div class="sr-score"><span class="sat">'+sc.score+'<small>/'+sc.max+'</small></span>'+
+      '<span class="acc">'+st.acc+'% <span>\u00b7 '+st.c+'/'+st.a+' CORRECT</span></span></div>'+
       '<button class="btn sec sm" data-simrep="'+i+'">View report \u2193</button></div>';
   }).reverse().join('');
   recs.dataset.loaded='1';
@@ -1338,6 +1426,7 @@ document.getElementById('acct').addEventListener('click',()=>{if(!UID)openSettin
 document.getElementById('acct-settings').addEventListener('click',e=>{e.stopPropagation();openSettings();});
 
 let M_PAYLOADS={};
+let TESTIDS={}; /* source_id -> practice-test display id (A2-RW2-Q20) */
 function renderShelf(fixed){
   const el=document.getElementById('slist');
   const ids=Object.keys(fixed).sort((a,b)=>fixed[b]-fixed[a]);
@@ -1346,7 +1435,7 @@ function renderShelf(fixed){
   if(ids.length===0){el.innerHTML='<p class="mnote" style="max-width:420px">nothing on the shelf yet \u2014 mark a mistake fixed and it lands here</p>';return;}
   el.innerHTML=ids.map(id=>{
     const p=M_PAYLOADS[id]||{};
-    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div><span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
+    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>'+(TESTIDS[id]?esc(TESTIDS[id])+' \u00b7 ':'')+'FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div><span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
   }).join('');
 }
 async function loadMistakes(){
@@ -1381,10 +1470,12 @@ async function loadMistakes(){
   const enc=[...new Set([...open.map(o=>o.id),...fixedIds])].map(i=>encodeURIComponent(i)).join(',');
   if(enc){
     try{
-      const[gen,harv]=await Promise.all([
+      const[gen,harv,ptq]=await Promise.all([
         mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
         mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,payload'),
+        mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)'),
       ]);
+      for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);TESTIDS[r.source_id]=r.practice_tests.label+'-'+code+'-Q'+r.position;}
       for(const r of(gen||[]))M_PAYLOADS[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
       for(const r of(harv||[]))M_PAYLOADS[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
     }catch(e){}
@@ -1393,7 +1484,7 @@ async function loadMistakes(){
   else list.innerHTML=open.map(o=>{
     const p=M_PAYLOADS[o.id]||{};
     const tag=o.mode==='exam'?'SAT SIM':'ZEN';
-    const meta=[tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
+    const meta=[TESTIDS[o.id],tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
     const thumb=p.img?'<img src="'+esc(p.img)+'" alt="" style="height:44px;border:1px solid var(--line);border-radius:3px;margin-top:6px;display:block;background:#fff">':'';
     return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||o.id)+'<small>'+esc(meta)+'</small></div>'+thumb+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
   }).join('');
@@ -1636,6 +1727,7 @@ loadStats();
 /* chat — the coach: text in, text out */
 const chatLog=document.getElementById('chat-log');
 const chatHist=[];
+const CHAT_GREETING='Hey Conan \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.';
 const CHAT_STATUSES=['rummaging through your mistakes','identifying weaknesses','searching the record','connecting the dots','flipping through the heatmap','re-reading your misses','weighing the evidence','sharpening the pencil'];
 let chatBusy=false,chatBooted=false,chatStatusTimer=null;
 
@@ -1764,7 +1856,7 @@ function chatBoot(){
   if(chatBooted)return;
   chatBooted=true;
   chatLoadSlugs();
-  typeCoach('Hey Conan \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.');
+  typeCoach(CHAT_GREETING);
   document.getElementById('chat-input').focus();
 }
 document.getElementById('chat-form').addEventListener('submit',async e=>{
@@ -1778,11 +1870,14 @@ document.getElementById('chat-form').addEventListener('submit',async e=>{
   chatHist.push({role:'user',content:text});
   chatBusy=true;send.disabled=true;chatStatusStart();
   try{
+    await chatEnsureThread(text);
+    chatSaveMsg('user',text);
     await chatLoadSlugs();
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHist.slice(-24),context:chatContext()})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||typeof j.content!=='string')throw new Error(j.error||('HTTP '+r.status));
     chatHist.push({role:'assistant',content:j.content});
+    chatSaveMsg('assistant',j.content);
     chatStatusStop();
     const parsed=parseDrills(j.content);
     const msgEl=await typeCoach(parsed.clean);
@@ -1802,6 +1897,175 @@ document.getElementById('chat-sugg').addEventListener('click',e=>{
   inp.value=b.textContent;
   document.getElementById('chat-form').requestSubmit();
 });
+
+/* chat history — threads persisted in Supabase, opened as a paper drawer */
+let chatThreadId=null,chatThreadsCache=[],chatMsgCache=[],chatMsgCounts={},histBusy=false;
+function mh(url,{method='GET',body,prefer}={}){
+  const h={...MH,'Content-Type':'application/json'};
+  if(prefer)h.Prefer=prefer;
+  return fetch(url,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)}).then(async r=>{
+    const j=await r.json().catch(()=>null);
+    if(!r.ok)throw new Error((j&&(j.message||j.error))||('HTTP '+r.status));
+    return j;
+  });
+}
+async function chatEnsureThread(firstText){
+  if(chatThreadId)return chatThreadId;
+  if(!UID){try{await AUTH_READY;}catch(e){}}
+  if(!UID)return null;
+  try{
+    const title=(firstText||'New chat').replace(/\s+/g,' ').slice(0,60);
+    const rows=await mh(SUP+'/rest/v1/chat_threads',{method:'POST',prefer:'return=representation',body:{user_id:UID,title}});
+    chatThreadId=rows&&rows[0]?rows[0].id:null;
+  }catch(e){chatThreadId=null;}
+  return chatThreadId;
+}
+function chatSaveMsg(role,content){
+  if(!chatThreadId)return;
+  const tid=chatThreadId;
+  mh(SUP+'/rest/v1/chat_messages',{method:'POST',body:{thread_id:tid,role,content}})
+    .then(()=>mh(SUP+'/rest/v1/chat_threads?id=eq.'+tid,{method:'PATCH',body:{updated_at:new Date().toISOString()}}))
+    .catch(()=>{});
+}
+async function chatLoadThreads(){
+  if(!UID){try{await AUTH_READY;}catch(e){}}
+  if(!UID){chatThreadsCache=[];chatMsgCache=[];chatMsgCounts={};return;}
+  try{
+    chatThreadsCache=(await mh(SUP+'/rest/v1/chat_threads?select=id,title,created_at,updated_at&order=updated_at.desc&limit=200'))||[];
+    const msgs=(await mh(SUP+'/rest/v1/chat_messages?select=thread_id,content&order=created_at.asc&limit=4000'))||[];
+    chatMsgCache=msgs;
+    chatMsgCounts={};
+    for(const m of msgs)chatMsgCounts[m.thread_id]=(chatMsgCounts[m.thread_id]||0)+1;
+  }catch(e){chatThreadsCache=[];chatMsgCache=[];chatMsgCounts={};}
+}
+function fmtRel(iso){
+  const diff=Date.now()-new Date(iso).getTime();
+  if(diff<60e3)return 'just now';
+  if(diff<3600e3)return Math.floor(diff/60e3)+'m ago';
+  if(diff<86400e3)return Math.floor(diff/3600e3)+'h ago';
+  if(diff<7*86400e3)return Math.floor(diff/86400e3)+'d ago';
+  return fmtDate(iso).toLowerCase();
+}
+function chatRenderThreads(){
+  const list=document.getElementById('chat-hist-list');
+  if(!list)return;
+  const q=document.getElementById('chat-hist-search').value.trim().toLowerCase();
+  if(!UID){
+    list.innerHTML='<div class="chh-empty">your chats live here once you sign in<br><a href="bluebook-practice-test.html#/login">sign in / create an account</a></div>';
+    return;
+  }
+  let threads=chatThreadsCache;
+  if(q){
+    const hits=new Set();
+    for(const t of threads)if((t.title||'').toLowerCase().includes(q))hits.add(t.id);
+    for(const m of chatMsgCache)if(!hits.has(m.thread_id)&&(m.content||'').toLowerCase().includes(q))hits.add(m.thread_id);
+    threads=threads.filter(t=>hits.has(t.id));
+  }
+  if(!threads.length){
+    list.innerHTML='<div class="chh-empty">'+(q?'no chats match \u201c'+esc(q)+'\u201d':'no saved chats yet')+'</div>';
+    return;
+  }
+  list.innerHTML='';
+  for(const t of threads){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='chh-item'+(t.id===chatThreadId?' on':'');
+    const n=chatMsgCounts[t.id]||0;
+    b.innerHTML='<span class="ci-main"><span class="ci-t">'+esc(t.title||'New chat')+'</span><span class="ci-m">'+fmtRel(t.updated_at||t.created_at)+(n?' \u00b7 '+n+' msg'+(n===1?'':'s'):'')+'</span></span>';
+    const x=document.createElement('button');
+    x.type='button';x.className='ci-d';x.innerHTML='&times;';x.title='Delete chat';
+    x.addEventListener('click',e=>{e.stopPropagation();chatDeleteThread(t.id);});
+    b.appendChild(x);
+    b.addEventListener('click',()=>chatOpenThread(t.id));
+    list.appendChild(b);
+  }
+}
+async function chatOpenThread(id){
+  if(chatBusy||histBusy)return;
+  if(id===chatThreadId){chatHistClose();return;}
+  histBusy=true;
+  try{
+    await chatLoadSlugs();
+    const msgs=(await mh(SUP+'/rest/v1/chat_messages?select=role,content&thread_id=eq.'+id+'&order=created_at.asc&limit=500'))||[];
+    chatThreadId=id;
+    chatHist.length=0;
+    chatLog.innerHTML='';
+    for(const m of msgs){
+      chatHist.push({role:m.role,content:m.content});
+      if(m.role==='user')addMsg('user',m.content);
+      else{const p=parseDrills(m.content);const d=addMsg('coach',p.clean);addDrillWidgets(d,p.drills);}
+    }
+    chatRenderThreads();
+    chatHistClose();
+  }catch(e){toast('COULDN\u2019T LOAD THAT CHAT');}
+  finally{histBusy=false;}
+}
+async function chatDeleteThread(id){
+  try{
+    await mh(SUP+'/rest/v1/chat_threads?id=eq.'+id,{method:'DELETE'});
+    chatThreadsCache=chatThreadsCache.filter(t=>t.id!==id);
+    chatMsgCache=chatMsgCache.filter(m=>m.thread_id!==id);
+    delete chatMsgCounts[id];
+    if(id===chatThreadId)chatReset();
+    chatRenderThreads();
+    toast('CHAT DELETED');
+  }catch(e){toast('COULDN\u2019T DELETE THAT CHAT');}
+}
+function chatReset(){
+  chatThreadId=null;
+  chatHist.length=0;
+  chatLog.innerHTML='';
+  typeCoach(CHAT_GREETING);
+  document.getElementById('chat-input').focus();
+}
+function chatHistOpen(){
+  const d=document.getElementById('chat-hist');
+  d.classList.add('open');d.setAttribute('aria-hidden','false');
+  document.getElementById('chat-hist-bd').classList.add('show');
+  const s=document.getElementById('chat-hist-search');
+  s.value='';
+  chatRenderThreads();
+  chatLoadThreads().then(chatRenderThreads);
+  setTimeout(()=>s.focus(),260);
+}
+function chatHistClose(){
+  const d=document.getElementById('chat-hist');
+  d.classList.remove('open');d.setAttribute('aria-hidden','true');
+  document.getElementById('chat-hist-bd').classList.remove('show');
+}
+document.getElementById('chat-hist-btn').addEventListener('click',()=>{
+  document.getElementById('chat-hist').classList.contains('open')?chatHistClose():chatHistOpen();
+});
+document.getElementById('chat-hist-close').addEventListener('click',chatHistClose);
+document.getElementById('chat-hist-bd').addEventListener('click',chatHistClose);
+document.getElementById('chat-hist-search').addEventListener('input',chatRenderThreads);
+document.getElementById('chat-hist-new').addEventListener('click',()=>{
+  if(chatBusy)return;
+  if(!chatThreadId&&!chatHist.length){chatHistClose();return;}
+  chatReset();
+  chatRenderThreads();
+  chatHistClose();
+});
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&document.getElementById('chat-hist').classList.contains('open'))chatHistClose();
+});
+
+/* chat navbox — the blue glow tracks the cursor around the sidebar */
+(function(){
+  const box=document.getElementById('navbox-chat');
+  if(!box||!matchMedia('(pointer:fine)').matches)return;
+  let raf=null,last=null;
+  const apply=()=>{
+    raf=null;
+    if(!last)return;
+    const r=box.getBoundingClientRect();
+    box.style.setProperty('--mx',Math.min(Math.max(last.x-r.left,-30),r.width+30)+'px');
+    box.style.setProperty('--my',Math.min(Math.max(last.y-r.top,-30),r.height+30)+'px');
+    const dx=Math.max(r.left-last.x,0,last.x-r.right),dy=Math.max(r.top-last.y,0,last.y-r.bottom);
+    box.style.setProperty('--glow',Math.max(0,1-Math.hypot(dx,dy)/240).toFixed(3));
+  };
+  addEventListener('pointermove',e=>{last={x:e.clientX,y:e.clientY};if(!raf)raf=requestAnimationFrame(apply);},{passive:true});
+})();
 
 /* initial hash route, deferred so data loaders see initialized consts */
 const h0=location.hash.slice(1);
