@@ -440,6 +440,32 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 .delta{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--right)}
 .delta.down{color:var(--wrong)}
 
+/* ============ LEADERBOARD ============ */
+.lb-head,.lb-row{display:grid;grid-template-columns:36px minmax(0,1fr) 108px 108px 108px;align-items:center;gap:10px}
+.lb-head{margin-bottom:2px}
+.lb-hl,.lb-hb{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lb-hb{border:none;background:none;padding:6px 0;cursor:pointer;text-align:right;transition:color .12s}
+.lb-hb:hover{color:var(--ink)}
+.lb-hb.on{color:var(--accent);font-weight:700}
+.lb-hb .arr{font-style:normal}
+.lb-row{padding:10px 4px;border-bottom:1.5px dashed var(--line);font-size:13.5px;font-weight:600;color:var(--ink);transition:background .15s}
+.lb-row:hover{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.lb-row.me{background:color-mix(in srgb,var(--accent) 9%,transparent);border-bottom:1.5px solid var(--accent)}
+.lb-c-rank{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--muted);text-align:center}
+.lb-row.me .lb-c-rank{color:var(--accent);font-weight:700}
+.lb-c-name{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-c-name .flag{font-style:normal;font-size:15px;margin-right:8px;vertical-align:-1px}
+.lb-c-num{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.04em;text-align:right;color:var(--ink)}
+.lb-form{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.lb-in{font-family:'Sora',sans-serif;font-size:14px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);color:var(--ink);outline:none;transition:box-shadow .15s}
+.lb-in:focus{box-shadow:3px 3px 0 var(--accent)}
+.lb-form .btn{padding:12px 20px;font-size:13px;white-space:nowrap}
+.lb-err{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--wrong);margin-top:10px;display:none}
+.lb-me-line{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:14px}
+.lb-me-line b{color:var(--accent)}
+.lb-edit{margin-left:8px}
+@media(max-width:720px){.lb-head,.lb-row{grid-template-columns:28px minmax(0,1fr) 76px 76px 76px}}
+
 /* ============ ONBOARDING MODAL / TOAST ============ */
 .ovl{position:fixed;inset:0;background:rgba(20,16,10,.5);backdrop-filter:blur(3px);z-index:50;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
 .ovl.show{opacity:1;pointer-events:auto}
@@ -725,13 +751,21 @@ body:not([data-view="today"]) .mast{display:none}
           <h1>Groups <em>&amp; social</em></h1>
         </div>
         <div class="panel">
-          <div class="ph"><span class="t">Your groups <b>&middot; coming soon</b></span><span class="t">WAITLIST</span></div>
+          <div class="ph"><span class="t">Global leaderboard <b>&middot; everyone, everywhere</b></span><span class="t" id="lb-status">LIVE</span></div>
           <div class="pb">
-            <p style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;line-height:1.4;max-width:600px">Shared decks, group streaks and friendly leaderboards are on the roadmap. For now your streak is yours alone.</p>
-            <div style="margin-top:22px;display:flex;gap:14px;flex-wrap:wrap">
-              <button class="btn pri" onclick="toast('ADDED TO THE GROUPS WAITLIST \u2713')">Join the waitlist &rarr;</button>
+            <div id="lb-gate"></div>
+            <div id="lb-board" style="display:none">
+              <div class="lb-head">
+                <span class="lb-hl lb-c-rank">#</span>
+                <span class="lb-hl">Player</span>
+                <button class="lb-hb" type="button" data-lbsort="questions_answered">Questions</button>
+                <button class="lb-hb" type="button" data-lbsort="best_score">Best score</button>
+                <button class="lb-hb" type="button" data-lbsort="time_ms">Time spent</button>
+              </div>
+              <div id="lb-rows"></div>
+              <div class="lb-me-line" id="lb-me"></div>
             </div>
-            <p class="mnote" style="margin-top:16px;max-width:420px">studying alone is fine — but a rival makes it fun</p>
+            <p class="mnote" style="margin-top:18px;max-width:440px">shared decks and group streaks are still cooking &mdash; for now the whole world is one group</p>
           </div>
         </div>
       </section>
@@ -995,6 +1029,7 @@ function goView(name){
   if(name==='skills')loadSkills();
   if(name==='today')loadToday();
   if(name==='stats')loadStats();
+  if(name==='groups')loadGroups();
   if(name==='chat')chatBoot();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
@@ -1225,6 +1260,39 @@ function simTestOf(s){
   for(const k in c)if(c[k]>n){n=c[k];best=k;}
   return best;
 }
+/* split events into runs (60+ min gap or mode switch breaks a run) */
+function simSessions(evts){
+  const sessions=[];
+  for(const e of evts){
+    const t=new Date(e.occurred_at).getTime();
+    let s=sessions[sessions.length-1];
+    if(!s||t-s.end>SIM_GAP||s.mode!==e.mode){s={mode:e.mode,start:t,end:t,evts:[]};sessions.push(s);}
+    s.end=t;s.evts.push(e);
+  }
+  return sessions;
+}
+/* populate SIM_MAP / SIM_TIDS for a set of events */
+async function buildSimMap(evts){
+  const ids=[...new Set(evts.map(e=>e.question_id))];
+  SIM_MAP={};SIM_TIDS={};
+  if(!ids.length)return;
+  const enc=ids.map(i=>encodeURIComponent(i)).join(',');
+  let gen=[],harv=[];
+  try{
+    [gen,harv]=await Promise.all([
+      mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
+      mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,section,payload'),
+    ]);
+  }catch(e){}
+  for(const r of(gen||[])){
+    const subj=r.payload.subjectCode||(r.payload.taxonomyCode||'').split(':')[0];
+    SIM_MAP[r.question_id]={skill:(r.payload.taxonomyCode||'').split(':')[1],section:subj==='SAT_RW'?'rw':'math'};
+  }
+  for(const r of(harv||[]))SIM_MAP[r.source_id]={skill:r.payload.curated?.skill??r.payload.skill,section:(r.section||'').indexOf('math')===0?'math':'rw'};
+  let ptq=[];
+  try{ptq=await mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)');}catch(e){}
+  for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);SIM_TIDS[r.source_id]={full:r.practice_tests.label+'-'+code+'-Q'+r.position,label:r.practice_tests.label};}
+}
 async function loadSim(){
   await AUTH_READY;
   const recs=document.getElementById('simrecs');
@@ -1233,33 +1301,8 @@ async function loadSim(){
   let evts=[];
   try{evts=await mfetch(SUP+'/rest/v1/student_events?student_id=eq.'+UID+'&order=occurred_at.asc&select=question_id,correct,mode,time_ms,occurred_at');}catch(e){}
   if(!Array.isArray(evts))evts=[];
-  const sessions=[];
-  for(const e of evts){
-    const t=new Date(e.occurred_at).getTime();
-    let s=sessions[sessions.length-1];
-    if(!s||t-s.end>SIM_GAP||s.mode!==e.mode){s={mode:e.mode,start:t,end:t,evts:[]};sessions.push(s);}
-    s.end=t;s.evts.push(e);
-  }
-  const ids=[...new Set(evts.map(e=>e.question_id))];
-  SIM_MAP={};
-  if(ids.length){
-    const enc=ids.map(i=>encodeURIComponent(i)).join(',');
-    let gen=[],harv=[];
-    try{
-      [gen,harv]=await Promise.all([
-        mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
-        mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,section,payload'),
-      ]);
-    }catch(e){}
-    for(const r of(gen||[])){
-      const subj=r.payload.subjectCode||(r.payload.taxonomyCode||'').split(':')[0];
-      SIM_MAP[r.question_id]={skill:(r.payload.taxonomyCode||'').split(':')[1],section:subj==='SAT_RW'?'rw':'math'};
-    }
-    for(const r of(harv||[]))SIM_MAP[r.source_id]={skill:r.payload.curated?.skill??r.payload.skill,section:(r.section||'').indexOf('math')===0?'math':'rw'};
-    let ptq=[];
-    try{ptq=await mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)');}catch(e){}
-    for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);SIM_TIDS[r.source_id]={full:r.practice_tests.label+'-'+code+'-Q'+r.position,label:r.practice_tests.label};}
-  }
+  const sessions=simSessions(evts);
+  await buildSimMap(evts);
   if(sessions.length===0){
     recs.innerHTML='<p class="mnote" style="max-width:460px">no runs yet \u2014 launch one above and it lands here, scored from your actual answers</p>';
     recs.dataset.loaded='1';return;
@@ -1280,6 +1323,98 @@ async function loadSim(){
   recs.dataset.loaded='1';
 }
 
+/* ============ GROUPS — GLOBAL LEADERBOARD ============
+   one row per player in leaderboard_entries; the dashboard recomputes the
+   signed-in player's stats from student_events and upserts them on view */
+const LB_REGIONS=[['','🌐 Global'],['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],['IN','India'],['CN','China'],['HK','Hong Kong'],['TW','Taiwan'],['JP','Japan'],['KR','South Korea'],['SG','Singapore'],['MY','Malaysia'],['ID','Indonesia'],['PH','Philippines'],['VN','Vietnam'],['TH','Thailand'],['PK','Pakistan'],['BD','Bangladesh'],['AE','UAE'],['SA','Saudi Arabia'],['TR','Türkiye'],['IL','Israel'],['EG','Egypt'],['NG','Nigeria'],['KE','Kenya'],['ZA','South Africa'],['GH','Ghana'],['DE','Germany'],['FR','France'],['ES','Spain'],['IT','Italy'],['PT','Portugal'],['NL','Netherlands'],['BE','Belgium'],['CH','Switzerland'],['AT','Austria'],['SE','Sweden'],['NO','Norway'],['DK','Denmark'],['FI','Finland'],['IE','Ireland'],['PL','Poland'],['CZ','Czechia'],['GR','Greece'],['RO','Romania'],['UA','Ukraine'],['RU','Russia'],['MX','Mexico'],['BR','Brazil'],['AR','Argentina'],['CL','Chile'],['CO','Colombia'],['PE','Peru'],['NZ','New Zealand']];
+const lbFlag=cc=>/^[A-Z]{2}$/.test(cc||'')?String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)):'\u{1F310}';
+let LB={rows:[],me:null,sort:'best_score',dir:-1};
+const lbNum=n=>(n||0).toLocaleString('en-US');
+const lbTime=ms=>{const m=Math.round((ms||0)/60000);if(m<60)return m+'m';const h=Math.floor(m/60);return h+(m%60?'h '+(m%60)+'m':'h');};
+async function loadGroups(){
+  await AUTH_READY;
+  const gate=document.getElementById('lb-gate'),board=document.getElementById('lb-board');
+  let rows=[];
+  try{const r=await SBC.from('leaderboard_entries').select('student_id,username,region,questions_answered,best_score,time_ms').limit(500);if(!r.error&&Array.isArray(r.data))rows=r.data;}catch(e){}
+  LB.rows=rows;LB.me=null;
+  board.style.display='';
+  lbRender();
+  if(!UID){gate.innerHTML=signInNote();return;}
+  LB.me=rows.find(r=>r.student_id===UID)||null;
+  if(!LB.me){lbRenderJoin(gate);return;}
+  gate.innerHTML='';
+  lbSync(); /* recompute + upsert my stats in the background */
+}
+function lbRenderJoin(gate){
+  gate.innerHTML='<p style="font-family:\'Fraunces\',serif;font-size:20px;font-weight:600;line-height:1.4;max-width:560px">One step before you enter: pick a leaderboard name &mdash; it&rsquo;s separate from your account &mdash; and a region to fly.</p>'+
+    '<form class="lb-form" id="lb-join">'+
+    '<input class="lb-in" id="lb-name" placeholder="leaderboard name" maxlength="16" autocomplete="off" style="width:200px" />'+
+    '<select class="lb-in" id="lb-region">'+LB_REGIONS.map(([c,n])=>'<option value="'+c+'">'+lbFlag(c)+' '+esc(n)+'</option>').join('')+'</select>'+
+    '<button class="btn pri" type="submit">Enter the board &rarr;</button></form>'+
+    '<div class="lb-err" id="lb-err"></div>';
+  document.getElementById('lb-join').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const err=document.getElementById('lb-err');
+    const name=document.getElementById('lb-name').value.trim();
+    const region=document.getElementById('lb-region').value;
+    if(!/^[\w .\-]{3,16}$/.test(name)){err.textContent='3–16 CHARS — LETTERS, NUMBERS, SPACE, . _ - ONLY';err.style.display='block';return;}
+    err.style.display='none';
+    const{error}=await SBC.from('leaderboard_entries').insert({student_id:UID,username:name,region});
+    if(error){err.textContent=/duplicate|unique/i.test(error.message||'')?'THAT NAME IS TAKEN — TRY ANOTHER':'COULDN’T SAVE — TRY AGAIN';err.style.display='block';return;}
+    toast('WELCOME TO THE BOARD, '+name.toUpperCase());
+    loadGroups();
+  });
+}
+/* recompute my stats from student_events and upsert my row */
+async function lbSync(){
+  let evts=[];
+  try{evts=await mfetch(SUP+'/rest/v1/student_events?student_id=eq.'+UID+'&order=occurred_at.asc&select=question_id,correct,mode,time_ms,occurred_at');}catch(e){}
+  if(!Array.isArray(evts))evts=[];
+  const qs=new Set(evts.map(e=>e.question_id)).size;
+  let time=0;for(const e of evts)time+=e.time_ms||0;
+  await buildSimMap(evts);
+  let best=0;
+  /* best score: timed/diagnostic runs only, normalized to the /1600 scale so
+     module runs and full tests compare apples-to-apples */
+  for(const s of simSessions(evts)){
+    if(s.mode!=='exam'&&s.mode!=='diagnostic')continue;
+    const sc=simScaled(simStats(s));
+    const norm=Math.round(sc.score*1600/sc.max);
+    if(norm>best)best=norm;
+  }
+  const row={student_id:UID,username:LB.me.username,region:LB.me.region,questions_answered:qs,best_score:best,time_ms:time,updated_at:new Date().toISOString()};
+  try{
+    const{error}=await SBC.from('leaderboard_entries').upsert(row,{onConflict:'student_id'});
+    if(!error){
+      Object.assign(LB.me,row);
+      lbRender();
+    }
+  }catch(e){}
+}
+function lbRender(){
+  const rowsEl=document.getElementById('lb-rows'),meEl=document.getElementById('lb-me');
+  document.querySelectorAll('[data-lbsort]').forEach(b=>{
+    const on=b.dataset.lbsort===LB.sort;
+    b.classList.toggle('on',on);
+    b.innerHTML=esc(b.textContent.replace(/ [▲▼]$/,''))+(on?' <i class="arr">'+(LB.dir<0?'▼':'▲')+'</i>':'');
+  });
+  const rows=[...LB.rows].sort((a,b)=>(a[LB.sort]-b[LB.sort])*LB.dir);
+  rowsEl.innerHTML=rows.length?rows.map((r,i)=>{
+    const me=UID&&r.student_id===UID;
+    return '<div class="lb-row'+(me?' me':'')+'">'+
+      '<span class="lb-c-rank">'+(i+1)+'</span>'+
+      '<span class="lb-c-name"><i class="flag">'+lbFlag(r.region)+'</i>'+esc(r.username)+'</span>'+
+      '<span class="lb-c-num">'+lbNum(r.questions_answered)+'</span>'+
+      '<span class="lb-c-num">'+(r.best_score?lbNum(r.best_score):'—')+'</span>'+
+      '<span class="lb-c-num">'+lbTime(r.time_ms)+'</span></div>';
+  }).join(''):'<p class="mnote" style="max-width:420px">no one on the board yet — answer some questions and claim the top spot</p>';
+  const mi=UID?rows.findIndex(r=>r.student_id===UID):-1;
+  meEl.innerHTML=mi>=0?'YOU&rsquo;RE <b>#'+(mi+1)+'</b> OF '+rows.length+' &middot; SORTED BY '+LB.sort.replace(/_/g,' ').toUpperCase():'';
+}
+document.querySelectorAll('[data-lbsort]').forEach(b=>b.addEventListener('click',()=>{
+  if(LB.sort===b.dataset.lbsort)LB.dir*=-1;else{LB.sort=b.dataset.lbsort;LB.dir=-1;}
+  lbRender();
+}));
 
 /* mistakes — live data layer (Supabase student_events) */
 const SUP='https://asnrquijopjjqfjvwalc.supabase.co';
