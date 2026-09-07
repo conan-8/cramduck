@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="/favicon.png">
 <title>Cramduck — study system</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -439,7 +440,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 #v-skills .panel .ph .t:first-child{font-size:15px;font-weight:800;color:#000;letter-spacing:.16em}
 #v-skills .panel .ph .t:first-child b{color:#000}
 body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"] #v-skills .panel .ph .t:first-child b{color:var(--ink)}
-.sksec-h{font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);margin:0 0 14px}
+.sksec-h{display:inline-block;font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);background:var(--note1);border:2px solid var(--ink);border-radius:3px;padding:8px 16px;margin:0 0 14px;box-shadow:3px 3px 0 var(--ink)}
 .sksec-div{border-top:1.5px dashed var(--line);margin:24px 0 22px}
 .skdom{margin-bottom:20px}
 .skdom .dl{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
@@ -504,7 +505,10 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 
 /* ============ CHAT ============ */
 /* chat fills the viewport exactly — only the log scrolls, never the page */
-#v-chat.on{display:flex;flex-direction:column;height:calc(100dvh - 326px);min-height:420px}
+#v-chat.on{display:flex;flex-direction:column;height:calc(100dvh - 106px);min-height:420px}
+body[data-view="chat"] .content{padding-bottom:12px}
+body[data-view="chat"] .foot{display:none}
+body:not([data-view="today"]) .mast{display:none}
 #v-chat .vh{margin-bottom:16px;flex:none}
 .chat-tools{flex:none;margin-bottom:14px}
 #v-chat .vh h1{font-size:clamp(30px,3.2vw,44px)}
@@ -512,7 +516,13 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 #v-chat>.mnote{display:none}
 #v-chat .panel .pb{flex:1;display:flex;flex-direction:column;min-height:0}
 .chat-log{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:4px 2px 18px;overflow-y:auto}
-@media(max-width:980px){#v-chat{height:calc(100dvh - 386px);min-height:380px}.chat-tools .btn{padding:10px 18px;font-size:13px}}
+@media(max-width:980px){#v-chat{height:calc(100dvh - 268px);min-height:380px}.chat-tools .btn{padding:10px 18px;font-size:13px}}
+#v-chat .panel .ph{justify-content:flex-start;gap:14px;flex-wrap:wrap}
+.ctoggle{display:inline-flex;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--sheet);flex:none}
+.ctoggle button{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:5px 14px;border:0;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
+.ctoggle button.on{background:var(--ink);color:var(--sheet)}
+.pro-note{display:inline-flex;align-items:center;gap:7px;font-family:'Caveat',cursive;font-size:16px;line-height:1;color:var(--accent);transform:rotate(-2deg)}
+.pro-note svg{flex:none}
 .msg{max-width:80%;padding:12px 15px;border-radius:3px;font-size:14.5px;line-height:1.65;font-family:'Sora',sans-serif;animation:msgin .28s cubic-bezier(.16,1,.3,1)}
 @keyframes msgin{from{opacity:0;transform:translateY(8px)}}
 .msg .who{display:block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:6px}
@@ -544,8 +554,10 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 .chat-sugg button{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border:1.5px dashed var(--line);border-radius:999px;background:transparent;color:var(--muted);cursor:pointer;transition:all .12s}
 .chat-sugg button:hover{border-color:var(--ink);color:var(--ink);border-style:solid}
 .chat-widget{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:12px;padding:14px 16px;border:1.5px solid var(--ink);border-left:5px solid var(--accent);border-radius:3px;background:var(--sheet);box-shadow:3px 3px 0 var(--shadow);animation:msgin .35s cubic-bezier(.16,1,.3,1)}
-.chat-widget .cw-t{font-family:'Fraunces',serif;font-weight:700;font-size:16px;letter-spacing:-.01em}
-.chat-widget .cw-m{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.chat-widget .cw-t{font-family:'Fraunces',serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.chat-widget .cw-m{font-family:'Space Mono',monospace;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.chat-widget .cw-sub{font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.16em;padding:9px 13px;border:2px solid var(--ink);border-radius:3px;background:var(--note3);color:var(--ink);box-shadow:2px 2px 0 var(--ink);flex:none}
+.chat-widget .cw-sub.math{background:var(--note4)}
 .chat-widget .cw-go{margin-left:auto;white-space:nowrap}
 
 /* ---- chat history drawer — a sheet of paper taped onto the chat panel ---- */
@@ -588,7 +600,7 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body data-mode="light">
+<body data-mode="light" data-view="today">
 
 <div class="shell">
   <!-- SIDEBAR -->
@@ -642,7 +654,7 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
       <!-- ========= TODAY ========= -->
       <section class="view on" id="v-today">
         <div class="vh">
-          <h1><b id="greet">Good evening</b>, <em>Conan.</em></h1>
+          <h1><b id="greet">Good evening</b>, <em id="greet-name">friend.</em></h1>
         </div>
         <div class="stats4">
           <div class="stat" id="st-exam"><div class="l">Days till next exam</div><span class="v" id="st-exam-n">–</span><div class="d" id="st-exam-name">SAT</div></div>
@@ -650,7 +662,7 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
           <div class="stat" id="st-improved"><div class="l">Most improved</div><span class="v" id="st-improved-n">–</span><div class="d" id="st-improved-d">skill</div></div>
           <div class="stat rd" id="st-weakest"><div class="l">Weakest skill</div><span class="v" id="st-weakest-n">–</span><div class="d" id="st-weakest-d">skill</div></div>
         </div>
-        <a class="resume" data-goto="sim"><span class="pl">&#9654;</span><span class="rt">Back to it &mdash; SAT Practice Test #1</span><span class="rm" id="resume-meta">MATH MODULE 2 — 18:24 LEFT</span></a>
+        <a class="resume" data-goto="sim" style="display:none"><span class="pl">&#9654;</span><span class="rt">Back to it &mdash; SAT Practice Test #1</span><span class="rm" id="resume-meta">MATH MODULE 2 — 18:24 LEFT</span></a>
         <div class="grid2">
           <div class="panel">
             <div class="ph"><span class="t">Today's plan <b>· 3 items</b></span><span class="t">one module a day</span></div>
@@ -701,7 +713,13 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
             <span class="chh-tape t2"></span>
             <span class="chh-tape t3"></span>
           </div>
-          <div class="ph"><span class="t">Coach <b>&middot; deepseek v4 flash</b></span></div>
+          <div class="ph">
+            <span class="ctoggle" id="chat-tier" role="group" aria-label="Coach tier">
+              <button type="button" data-tier="fast">Fast</button>
+              <button type="button" data-tier="pro" class="on">Pro</button>
+            </span>
+            <span class="pro-note"><svg width="26" height="14" viewBox="0 0 26 14" fill="none" aria-hidden="true"><path d="M25 12C18 10.5 10 9 3.5 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 3.2L3 7l5.6 3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>pro is free for a limited time</span>
+          </div>
           <div class="pb">
             <div class="chat-log" id="chat-log"></div>
             <form class="chat-in" id="chat-form">
@@ -992,6 +1010,7 @@ setMode((()=>{try{return localStorage.getItem(MODE_KEY)}catch(e){return null}})(
 
 /* views */
 function goView(name){
+  document.body.dataset.view=name;
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+name));
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
   document.querySelector('.content').scrollTo?.(0,0); window.scrollTo(0,0);
@@ -1337,7 +1356,13 @@ function adoptUser(u,token){
   for(const i of(u.identities||[])){const d=i.identity_data||{};if(!USER_AVATAR)USER_AVATAR=d.avatar_url||d.picture||null;}
   if(token)MH.Authorization='Bearer '+token;
 }
+const niceName=()=>{const l=(USER_NAME||USER_EMAIL||'').split('@')[0];return l?l.charAt(0).toUpperCase()+l.slice(1):'';};
+const OWNER_EMAIL='yiconan885@gmail.com';
 function renderAcct(){
+  const gn=document.getElementById('greet-name');
+  if(gn)gn.textContent=(niceName()||'friend')+'.';
+  const rb=document.querySelector('a.resume');
+  if(rb)rb.style.display=(USER_EMAIL||'').toLowerCase()===OWNER_EMAIL?'':'none';
   const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name');
   if(!av||!nm)return;
   // no sign-in wiring — the chip is just the settings affordance; the
@@ -1725,9 +1750,22 @@ loadToday();
 loadStats();
 
 /* chat — the coach: text in, text out */
+const TIER_KEY='cramduck_chat_tier';
+let chatTier='pro';
+try{if(localStorage.getItem(TIER_KEY)==='fast')chatTier='fast';}catch(e){}
+function setTier(t){
+  chatTier=t;
+  try{localStorage.setItem(TIER_KEY,t);}catch(e){}
+  document.querySelectorAll('#chat-tier button').forEach(b=>b.classList.toggle('on',b.dataset.tier===t));
+}
+document.getElementById('chat-tier').addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(b&&b.dataset.tier)setTier(b.dataset.tier);
+});
+setTier(chatTier);
 const chatLog=document.getElementById('chat-log');
 const chatHist=[];
-const CHAT_GREETING='Hey Conan \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.';
+const CHAT_GREETING=()=>'Hey '+(niceName()||'there')+' \u2014 I keep an eye on your record: streaks, misses, weak skills. Ask me anything about them \u2014 what\u2019s shaky, what to drill next, or how to plan the week. I read your live stats before I answer.';
 const CHAT_STATUSES=['rummaging through your mistakes','identifying weaknesses','searching the record','connecting the dots','flipping through the heatmap','re-reading your misses','weighing the evidence','sharpening the pencil'];
 let chatBusy=false,chatBooted=false,chatStatusTimer=null;
 
@@ -1787,9 +1825,9 @@ let chatSlugs=null; // slug -> pretty name, lazy-loaded from the taxonomy
 async function chatLoadSlugs(){
   if(chatSlugs)return chatSlugs;
   try{
-    const nodes=await mfetch(SUP+'/rest/v1/taxonomy_nodes?select=kind,slug&order=code');
+    const nodes=await mfetch(SUP+'/rest/v1/taxonomy_nodes?select=kind,slug,parent_code&order=code');
     const map={};
-    for(const n of(nodes||[]))if(n.kind==='skill'&&n.slug)map[n.slug]=skPretty(n.slug);
+    for(const n of(nodes||[]))if(n.kind==='skill'&&n.slug)map[n.slug]={name:skPretty(n.slug),rw:String(n.parent_code||'').startsWith('SAT_RW')};
     chatSlugs=map;
   }catch(e){chatSlugs={};}
   return chatSlugs;
@@ -1807,7 +1845,8 @@ function addDrillWidgets(msgEl,drills){
   for(const d of drills){
     const w=document.createElement('div');
     w.className='chat-widget';
-    w.innerHTML='<div><div class="cw-t">'+esc(chatSlugs[d.slug]||d.slug)+'</div><div class="cw-m">DRILL &middot; '+d.count+' QUESTIONS &middot; ZEN MODE</div></div>';
+    const info=chatSlugs[d.slug]||{name:d.slug,rw:false};
+    w.innerHTML='<span class="cw-sub'+(info.rw?'':' math')+'">'+(info.rw?'R&amp;W':'MATH')+'</span><div><div class="cw-t">'+esc(info.name)+'</div><div class="cw-m">DRILL &middot; '+d.count+' QUESTIONS &middot; ZEN MODE</div></div>';
     const b=document.createElement('button');
     b.className='btn pri cw-go';
     b.textContent='Start \u2192';
@@ -1856,7 +1895,7 @@ function chatBoot(){
   if(chatBooted)return;
   chatBooted=true;
   chatLoadSlugs();
-  typeCoach(CHAT_GREETING);
+  typeCoach(CHAT_GREETING());
   document.getElementById('chat-input').focus();
 }
 document.getElementById('chat-form').addEventListener('submit',async e=>{
@@ -1873,7 +1912,7 @@ document.getElementById('chat-form').addEventListener('submit',async e=>{
     await chatEnsureThread(text);
     chatSaveMsg('user',text);
     await chatLoadSlugs();
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHist.slice(-24),context:chatContext()})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHist.slice(-24),context:chatContext(),tier:chatTier})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||typeof j.content!=='string')throw new Error(j.error||('HTTP '+r.status));
     chatHist.push({role:'assistant',content:j.content});
@@ -2015,7 +2054,7 @@ function chatReset(){
   chatThreadId=null;
   chatHist.length=0;
   chatLog.innerHTML='';
-  typeCoach(CHAT_GREETING);
+  typeCoach(CHAT_GREETING());
   document.getElementById('chat-input').focus();
 }
 function chatHistOpen(){
