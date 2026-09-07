@@ -501,6 +501,12 @@ body:not([data-view="today"]) .mast{display:none}
 #v-chat .panel .pb{flex:1;display:flex;flex-direction:column;min-height:0}
 .chat-log{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:4px 2px 18px;overflow-y:auto}
 @media(max-width:980px){#v-chat{height:calc(100dvh - 268px);min-height:380px}}
+#v-chat .panel .ph{justify-content:flex-start;gap:14px;flex-wrap:wrap}
+.ctoggle{display:inline-flex;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--sheet);flex:none}
+.ctoggle button{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:5px 14px;border:0;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
+.ctoggle button.on{background:var(--ink);color:var(--sheet)}
+.pro-note{display:inline-flex;align-items:center;gap:7px;font-family:'Caveat',cursive;font-size:16px;line-height:1;color:var(--accent);transform:rotate(-2deg)}
+.pro-note svg{flex:none}
 .msg{max-width:80%;padding:12px 15px;border-radius:3px;font-size:14.5px;line-height:1.65;font-family:'Sora',sans-serif;animation:msgin .28s cubic-bezier(.16,1,.3,1)}
 @keyframes msgin{from{opacity:0;transform:translateY(8px)}}
 .msg .who{display:block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:6px}
@@ -631,7 +637,13 @@ body:not([data-view="today"]) .mast{display:none}
           <h1>Ask <em>the coach</em></h1>
         </div>
         <div class="panel">
-          <div class="ph"><span class="t">Coach <b>&middot; deepseek v4 flash</b></span></div>
+          <div class="ph">
+            <span class="ctoggle" id="chat-tier" role="group" aria-label="Coach tier">
+              <button type="button" data-tier="fast">Fast</button>
+              <button type="button" data-tier="pro" class="on">Pro</button>
+            </span>
+            <span class="pro-note"><svg width="26" height="14" viewBox="0 0 26 14" fill="none" aria-hidden="true"><path d="M25 12C18 10.5 10 9 3.5 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 3.2L3 7l5.6 3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>pro is free for a limited time</span>
+          </div>
           <div class="pb">
             <div class="chat-log" id="chat-log"></div>
             <form class="chat-in" id="chat-form">
@@ -1645,6 +1657,19 @@ loadToday();
 loadStats();
 
 /* chat — the coach: text in, text out */
+const TIER_KEY='cramduck_chat_tier';
+let chatTier='pro';
+try{if(localStorage.getItem(TIER_KEY)==='fast')chatTier='fast';}catch(e){}
+function setTier(t){
+  chatTier=t;
+  try{localStorage.setItem(TIER_KEY,t);}catch(e){}
+  document.querySelectorAll('#chat-tier button').forEach(b=>b.classList.toggle('on',b.dataset.tier===t));
+}
+document.getElementById('chat-tier').addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(b&&b.dataset.tier)setTier(b.dataset.tier);
+});
+setTier(chatTier);
 const chatLog=document.getElementById('chat-log');
 const chatHist=[];
 const CHAT_STATUSES=['rummaging through your mistakes','identifying weaknesses','searching the record','connecting the dots','flipping through the heatmap','re-reading your misses','weighing the evidence','sharpening the pencil'];
@@ -1790,7 +1815,7 @@ document.getElementById('chat-form').addEventListener('submit',async e=>{
   chatBusy=true;send.disabled=true;chatStatusStart();
   try{
     await chatLoadSlugs();
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHist.slice(-24),context:chatContext()})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHist.slice(-24),context:chatContext(),tier:chatTier})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||typeof j.content!=='string')throw new Error(j.error||('HTTP '+r.status));
     chatHist.push({role:'assistant',content:j.content});

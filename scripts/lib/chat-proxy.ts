@@ -5,17 +5,19 @@
  *   - Vercel serverless function (api/chat.ts)
  *   - local dev server (scripts/serve.ts)
  *
- * Calls OpenRouter (inclusionai/ling-3.0-flash-fin, medium reasoning effort).
+ * Calls OpenRouter with one of two tiers, chosen by the client:
+ *   fast — inclusionai/ling-3.0-flash-fin
+ *   pro  — google/gemini-3.8-flash (medium reasoning effort; default tier)
  * Only the final answer is returned to the client — reasoning content is
  * never forwarded.
  *
  * Env:
  *   OPENROUTER_API_KEY   required (same key as the question generator)
- *   CHAT_MODEL           optional; defaults to inclusionai/ling-3.0-flash-fin
  */
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'inclusionai/ling-3.0-flash-fin';
+const FAST_MODEL = 'inclusionai/ling-3.0-flash-fin';
+const PRO_MODEL = 'google/gemini-3.8-flash';
 const MAX_MESSAGES = 24;
 const MAX_CONTENT = 8000;
 const MAX_CONTEXT = 2000;
@@ -69,9 +71,10 @@ async function callModel(apiKey: string, model: string, messages: ChatMessage[],
 export async function handleChat(payload: unknown): Promise<ChatResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return { status: 500, body: { error: 'OPENROUTER_API_KEY is not set on the server' } };
-  const model = process.env.CHAT_MODEL || DEFAULT_MODEL;
 
   const p = (payload ?? {}) as Record<string, unknown>;
+  const tier = p.tier === 'fast' ? 'fast' : 'pro';
+  const model = tier === 'fast' ? FAST_MODEL : PRO_MODEL;
   const messages = sanitizeMessages(p.messages);
   if (messages.length === 0 || messages[messages.length - 1]?.role !== 'user') {
     return { status: 400, body: { error: 'expected a non-empty messages array ending with a user message' } };
@@ -86,7 +89,8 @@ export async function handleChat(payload: unknown): Promise<ChatResult> {
 
   let res: Response;
   try {
-    res = await callModel(apiKey, model, full, { reasoning: { effort: 'medium' } });
+    const extra = tier === 'pro' ? { reasoning: { effort: 'medium' } } : {};
+    res = await callModel(apiKey, model, full, extra);
     if (res.status === 400) {
       res = await callModel(apiKey, model, full, {});
     }
