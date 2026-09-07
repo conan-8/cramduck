@@ -72,16 +72,16 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 .navbox{border:1.5px solid var(--line);border-radius:6px;padding:8px;margin-top:4px;background:color-mix(in srgb,var(--sheet) 55%,transparent)}
 .navbox .nb-t{font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin:4px 6px 6px}
 .navbox .navgrp{margin:0}
-/* chat lives in its own little box — always glowing inward from the edges,
-   with a brighter spot that follows the cursor around the sidebar */
-.navbox-chat{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--accent) 50%,var(--line));
+/* chat lives in its own little box — the blue glow is confined inside the button:
+   always glowing inward from its edges, with a brighter spot that follows the cursor */
+.navbox-chat button{position:relative;z-index:1;overflow:hidden;border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.navbox-chat button::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
   box-shadow:inset 0 0 18px -5px color-mix(in srgb,var(--accent) 55%,transparent),
              inset 0 0 6px -1px color-mix(in srgb,var(--accent) 30%,transparent),
              inset 0 0 calc(34px * var(--glow,0)) -6px color-mix(in srgb,var(--accent) 60%,transparent)}
-.navbox-chat::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+.navbox-chat button::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
   background:radial-gradient(120px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%);
   opacity:var(--glow,0);transition:opacity .25s}
-.navbox-chat button{position:relative;z-index:1}
 .nav button:hover{border-color:var(--ink);color:var(--ink);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
 .nav button.on{background:var(--ink);color:var(--sheet);border-color:var(--ink);box-shadow:3px 3px 0 var(--accent)}
 .nav button .bdg{font-size:9px;padding:2px 6px;border:1px solid currentColor;border-radius:2px}
@@ -148,7 +148,6 @@ body[data-mode="blueprint"] .switch-row,body[data-mode="blueprint"] .drop-link{c
 .pbar.g i{background:repeating-linear-gradient(-45deg,var(--right) 0 8px,color-mix(in srgb,var(--right) 50%,transparent) 8px 16px)}
 .mnote{font-family:'Caveat',cursive;color:var(--accent);font-size:20px;transform:rotate(-3deg);line-height:1.15}
 @media(max-width:980px){.mnote{display:none}}
-.chipx{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;padding:6px 11px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);text-transform:uppercase}
 .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:26px;align-items:start}
 @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
@@ -386,7 +385,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .simrec .sr-main{flex:1;min-width:250px}
 .simrec .sr-st{font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
 .simrec .sr-st.done{color:var(--right)}
-.simrec h3{font-family:'Fraunces',serif;font-weight:900;font-size:28px;margin:0 0 5px;letter-spacing:-.015em;color:var(--ink)}
+.simrec h3{font-family:'Sora',sans-serif;font-weight:800;font-size:28px;margin:0 0 5px;letter-spacing:-.01em;color:var(--ink)}
 .simrec .sr-meta{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
 .simrec:hover .mods i{border-color:var(--ink);color:var(--ink)}
 .simrec:hover .mods i.done{border-color:var(--right);color:#fff}
@@ -396,23 +395,6 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .simrec .sr-score .acc{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
 .simrec .sr-score .acc span{color:var(--muted);font-weight:400}
 .simrec .sr-score.none .sat{color:var(--muted)}
-.scorewrap{display:flex;gap:34px;align-items:center;flex-wrap:wrap}
-.bignum{font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(64px,7vw,96px);line-height:1;letter-spacing:-.04em;color:var(--accent)}
-.bignum small{font-size:.28em;color:var(--muted);font-weight:600;letter-spacing:0}
-.secrow{display:flex;align-items:center;gap:14px;margin-bottom:10px}
-.secrow .sl{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);width:130px;flex:none}
-.secrow .sv{font-family:'Sora',sans-serif;font-weight:800;font-size:18px;width:56px;text-align:right;flex:none}
-.secbar{flex:1;height:10px;border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;background:var(--sheet);min-width:80px}
-.secbar i{display:block;height:100%;background:repeating-linear-gradient(-45deg,var(--accent) 0 7px,color-mix(in srgb,var(--accent) 45%,transparent) 7px 14px)}
-.domgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.dom{border:1.5px solid var(--line);border-radius:3px;padding:11px 13px;transition:all .15s;cursor:default;background:var(--sheet)}
-.dom:hover{border-color:var(--ink);transform:translateY(-3px);box-shadow:0 10px 18px -8px rgba(0,0,0,.3)}
-.dom .dn{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;min-height:22px}
-.dom .dv{font-family:'Sora',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em}
-.dom .db{height:5px;border-radius:2px;background:color-mix(in srgb,var(--muted) 18%,transparent);margin-top:7px;overflow:hidden}
-.dom .db i{display:block;height:100%}
-.dom .dd{font-family:'Space Mono',monospace;font-size:9px;color:var(--right);margin-top:6px}
-.dom .dd.down{color:var(--wrong)}
 
 /* ============ MISTAKES ============ */
 .mtabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
@@ -568,9 +550,9 @@ body:not([data-view="today"]) .mast{display:none}
 .chat-hist-bd{position:absolute;inset:0;background:rgba(20,16,10,.22);opacity:0;pointer-events:none;transition:opacity .3s;z-index:11;border-radius:3px}
 .chat-hist-bd.show{opacity:1;pointer-events:auto}
 .chat-hist{position:absolute;top:0;bottom:0;left:0;width:min(330px,92%);z-index:12;pointer-events:none;
-  transform:translateX(-104%);transition:transform .4s cubic-bezier(.16,1,.3,1);
+  transform:translateX(-104%);visibility:hidden;transition:transform .4s cubic-bezier(.16,1,.3,1),visibility 0s linear .4s;
   filter:drop-shadow(12px 0 20px rgba(0,0,0,.3))}
-.chat-hist.open{transform:none;pointer-events:auto}
+.chat-hist.open{transform:none;visibility:visible;pointer-events:auto;transition:transform .4s cubic-bezier(.16,1,.3,1),visibility 0s}
 .chh-paper{position:absolute;inset:0;background:var(--sheet);display:flex;flex-direction:column;gap:12px;padding:16px 22px 16px 18px;
   clip-path:polygon(0 0,calc(100% - 7px) 0,100% 2%,calc(100% - 9px) 4%,100% 6%,calc(100% - 6px) 8%,calc(100% - 10px) 10%,100% 12%,calc(100% - 8px) 14%,100% 16%,calc(100% - 7px) 18%,100% 20%,calc(100% - 10px) 22%,100% 24%,calc(100% - 6px) 26%,100% 28%,calc(100% - 9px) 30%,100% 32%,calc(100% - 7px) 34%,100% 36%,calc(100% - 10px) 38%,100% 40%,calc(100% - 6px) 42%,100% 44%,calc(100% - 9px) 46%,100% 48%,calc(100% - 7px) 50%,100% 52%,calc(100% - 10px) 54%,100% 56%,calc(100% - 6px) 58%,100% 60%,calc(100% - 9px) 62%,100% 64%,calc(100% - 7px) 66%,100% 68%,calc(100% - 10px) 70%,100% 72%,calc(100% - 6px) 74%,100% 76%,calc(100% - 9px) 78%,100% 80%,calc(100% - 7px) 82%,100% 84%,calc(100% - 10px) 86%,100% 88%,calc(100% - 6px) 90%,100% 92%,calc(100% - 9px) 94%,100% 96%,calc(100% - 7px) 98%,calc(100% - 5px) 100%,0 100%)}
 .chh-rules{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 27px,var(--rule) 27px 28px);
@@ -582,7 +564,7 @@ body:not([data-view="today"]) .mast{display:none}
 .chh-tape.t3{bottom:70px;right:-15px;transform:rotate(-7deg)}
 .chh-head{display:flex;justify-content:space-between;align-items:center;flex:none;position:relative}
 .chh-head .chh-t{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
-.chh-x{font-size:20px;line-height:1;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 6px;transition:color .12s,transform .12s}
+.chh-x{font-size:30px;line-height:1;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 8px;transition:color .12s,transform .12s}
 .chh-x:hover{color:var(--wrong);transform:rotate(90deg)}
 .chh-search{flex:none;width:100%;font-family:'Sora',sans-serif;font-size:13.5px;padding:10px 12px;border:1.5px solid var(--ink);border-radius:3px;background:var(--paper);color:var(--ink);outline:none;transition:box-shadow .15s;position:relative}
 .chh-search:focus{box-shadow:3px 3px 0 var(--accent)}
@@ -890,10 +872,6 @@ body:not([data-view="today"]) .mast{display:none}
 
           <div class="zc-label" style="margin:34px 0 12px">Past sessions</div>
           <div class="simrecs" id="simrecs"></div>
-          <div class="panel" id="score-report" style="display:none">
-            <div class="ph"><span class="t" id="sr-title">SCORE REPORT</span><span class="t" id="sr-when"></span></div>
-            <div class="pb" id="sr-body"></div>
-          </div>
         </div>
 
       </section>
@@ -1214,11 +1192,11 @@ document.querySelectorAll('[data-sc]').forEach(b=>b.addEventListener('click',()=
 document.getElementById('sim-start').addEventListener('click',()=>{
   window.open('bluebook-practice-test.html'+(SC==='full'?'':'?focus='+encodeURIComponent(SC)),'_blank');
 });
-/* past sessions + score report — sessionized from student_events: a run
+/* past sessions — sessionized from student_events: a run
    breaks on a 60+ min gap or a mode switch; every number is graded from
    the recorded answers, nothing invented */
 const SIM_GAP=60*60000;
-let SIM_SESSIONS=[],SIM_MAP={},SIM_SEL=-1,SIM_TIDS={}; /* question_id -> {full,label} practice-test ids */
+let SIM_MAP={},SIM_TIDS={}; /* question_id -> {full,label} practice-test ids */
 const SIM_MODE={exam:'TIMED RUN',practice:'ZEN MODE',diagnostic:'DIAGNOSTIC'};
 const SIM_TITLE={exam:'Digital SAT \u2014 timed run',practice:'Zen mode \u2014 practice stream',diagnostic:'Diagnostic \u2014 placement run'};
 function simStats(s){
@@ -1255,8 +1233,8 @@ function simTestOf(s){
 }
 async function loadSim(){
   await AUTH_READY;
-  const recs=document.getElementById('simrecs'),rep=document.getElementById('score-report');
-  if(!UID){recs.innerHTML=signInNote();rep.style.display='none';return;}
+  const recs=document.getElementById('simrecs');
+  if(!UID){recs.innerHTML=signInNote();return;}
   if(!recs.dataset.loaded)recs.innerHTML='<p class="mnote" style="max-width:420px">loading your runs\u2026</p>';
   let evts=[];
   try{evts=await mfetch(SUP+'/rest/v1/student_events?student_id=eq.'+UID+'&order=occurred_at.asc&select=question_id,correct,mode,time_ms,occurred_at');}catch(e){}
@@ -1268,7 +1246,6 @@ async function loadSim(){
     if(!s||t-s.end>SIM_GAP||s.mode!==e.mode){s={mode:e.mode,start:t,end:t,evts:[]};sessions.push(s);}
     s.end=t;s.evts.push(e);
   }
-  SIM_SESSIONS=sessions;
   const ids=[...new Set(evts.map(e=>e.question_id))];
   SIM_MAP={};
   if(ids.length){
@@ -1291,7 +1268,7 @@ async function loadSim(){
   }
   if(sessions.length===0){
     recs.innerHTML='<p class="mnote" style="max-width:460px">no runs yet \u2014 launch one above and it lands here, scored from your actual answers</p>';
-    rep.style.display='none';recs.dataset.loaded='1';return;
+    recs.dataset.loaded='1';return;
   }
   recs.innerHTML=sessions.map((s,i)=>{
     const st=simStats(s);
@@ -1304,57 +1281,11 @@ async function loadSim(){
       '<div class="sr-meta">'+sc.scope+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+' \u00b7 '+simDur(st.time)+'</div>'+
       '<div class="mods">'+chips+'</div></div>'+
       '<div class="sr-score"><span class="sat">'+sc.score+'<small>/'+sc.max+'</small></span>'+
-      '<span class="acc">'+st.acc+'% <span>\u00b7 '+st.c+'/'+st.a+' CORRECT</span></span></div>'+
-      '<button class="btn sec sm" data-simrep="'+i+'">View report \u2193</button></div>';
+      '<span class="acc">'+st.acc+'% <span>\u00b7 '+st.c+'/'+st.a+' CORRECT</span></span></div></div>';
   }).reverse().join('');
   recs.dataset.loaded='1';
-  simReport(SIM_SEL>=0&&SIM_SEL<sessions.length?SIM_SEL:sessions.length-1);
 }
-function simReport(i){
-  const s=SIM_SESSIONS[i];if(!s)return;
-  SIM_SEL=i;
-  const rep=document.getElementById('score-report');rep.style.display='';
-  const st=simStats(s);
-  document.getElementById('sr-title').innerHTML='SCORE REPORT <b>\u00b7 '+((simTestOf(s)?'TEST '+esc(simTestOf(s))+' \u00b7 ':'')+'RUN '+(i+1)+' OF '+SIM_SESSIONS.length)+'</b>';
-  document.getElementById('sr-when').textContent=fmtDate(new Date(s.start).toISOString())+' \u00b7 '+SIM_MODE[s.mode]+' \u00b7 GRADED FROM YOUR ANSWERS';
-  const prev=i>0?simStats(SIM_SESSIONS[i-1]):null;
-  const priorSkill={};
-  for(const s2 of SIM_SESSIONS.slice(0,i))for(const e of s2.evts){
-    const sk=(SIM_MAP[e.question_id]||{}).skill;if(!sk)continue;
-    const o=priorSkill[sk]??=priorSkill[sk]||{a:0,c:0};o.a++;if(e.correct)o.c++;
-  }
-  const secs=['rw','math'].filter(k=>st.sec[k]).map(k=>{
-    const o=st.sec[k],pct=Math.round(o.c/o.a*100);
-    return '<div class="secrow"><span class="sl">'+(k==='rw'?'READING &amp; WRITING':'MATH')+'</span><div class="secbar"><i style="width:'+pct+'%"></i></div><span class="sv">'+pct+'%</span></div>';
-  }).join('');
-  const note=prev
-    ?(st.acc-prev.acc>=0?'+':'')+(st.acc-prev.acc)+' pts vs your previous run \u2014 '+(st.acc>=prev.acc?'trending up':'shake it off next run')
-    :'first run on record \u2014 this is the baseline everything else gets measured against';
-  const doms=Object.entries(st.skill).map(([sk,o])=>{
-    const pct=Math.round(o.c/o.a*100);
-    const col=pct>=85?'var(--right)':pct>=70?'var(--accent)':'var(--wrong)';
-    const pr=priorSkill[sk];
-    const dd=pr
-      ?(()=>{const d=pct-Math.round(pr.c/pr.a*100);return '<div class="dd'+(d<0?' down':'')+'">'+(d>=0?'+':'\u2212')+Math.abs(d)+' VS PRIOR</div>';})()
-      :'<div class="dd" style="color:var(--muted)">FIRST LOOK \u00b7 '+o.a+' Q'+(o.a===1?'':'S')+'</div>';
-    return '<div class="dom"><div class="dn">'+esc(skPretty(sk))+'</div><div class="dv">'+pct+'%</div><div class="db"><i style="width:'+pct+'%;background:'+col+'"></i></div>'+dd+'</div>';
-  }).join('');
-  const wrong=st.a-st.c;
-  document.getElementById('sr-body').innerHTML=
-    '<div class="scorewrap"><div class="bignum">'+st.acc+'<small>% correct</small></div>'+
-    '<div style="flex:1;min-width:270px">'+secs+'<p class="mnote" style="margin-top:10px">'+esc(note)+'</p></div></div>'+
-    '<div class="mono" style="font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px">Domain breakdown</div>'+
-    (doms?'<div class="domgrid">'+doms+'</div>':'<p class="mnote">no skill mapping for these questions yet</p>')+
-    '<div style="display:flex;gap:14px;margin-top:28px;flex-wrap:wrap">'+
-    (wrong>0?'<a class="btn pri" href="#" data-simmistakes>Review '+wrong+' mistake'+(wrong===1?'':'s')+' \u2192</a>':'<span class="chipx">CLEAN RUN \u00b7 NO MISSES</span>')+
-    '<a class="btn sec" href="bluebook-practice-test.html" target="_blank" rel="noopener">Launch simulator \u2197</a></div>';
-}
-document.addEventListener('click',e=>{
-  const rb=e.target.closest('[data-simrep]');
-  if(rb){simReport(+rb.dataset.simrep);document.getElementById('score-report').scrollIntoView({behavior:'smooth',block:'start'});return;}
-  const mb=e.target.closest('[data-simmistakes]');
-  if(mb){e.preventDefault();goView('mistakes');}
-});
+
 
 /* mistakes — live data layer (Supabase student_events) */
 const SUP='https://asnrquijopjjqfjvwalc.supabase.co';
@@ -2114,19 +2045,19 @@ addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.getElementById('chat-hist').classList.contains('open'))chatHistClose();
 });
 
-/* chat navbox — the blue glow tracks the cursor around the sidebar */
+/* chat button — the blue glow tracks the cursor, confined inside the button */
 (function(){
-  const box=document.getElementById('navbox-chat');
-  if(!box||!matchMedia('(pointer:fine)').matches)return;
+  const btn=document.querySelector('#navbox-chat button');
+  if(!btn||!matchMedia('(pointer:fine)').matches)return;
   let raf=null,last=null;
   const apply=()=>{
     raf=null;
     if(!last)return;
-    const r=box.getBoundingClientRect();
-    box.style.setProperty('--mx',Math.min(Math.max(last.x-r.left,-30),r.width+30)+'px');
-    box.style.setProperty('--my',Math.min(Math.max(last.y-r.top,-30),r.height+30)+'px');
+    const r=btn.getBoundingClientRect();
+    btn.style.setProperty('--mx',Math.min(Math.max(last.x-r.left,-30),r.width+30)+'px');
+    btn.style.setProperty('--my',Math.min(Math.max(last.y-r.top,-30),r.height+30)+'px');
     const dx=Math.max(r.left-last.x,0,last.x-r.right),dy=Math.max(r.top-last.y,0,last.y-r.bottom);
-    box.style.setProperty('--glow',Math.max(0,1-Math.hypot(dx,dy)/240).toFixed(3));
+    btn.style.setProperty('--glow',Math.max(0,1-Math.hypot(dx,dy)/240).toFixed(3));
   };
   addEventListener('pointermove',e=>{last={x:e.clientX,y:e.clientY};if(!raf)raf=requestAnimationFrame(apply);},{passive:true});
 })();
