@@ -104,13 +104,23 @@ const GRID_MIX: Record<Tier, [number, number, number]> = {
   hard: [0.0, 0.2, 0.8],
 };
 
-/** RW in-module ordering: passage domains first (Craft & Structure +
- *  Information & Ideas, interleaved), then Expression of Ideas, then
- *  Standard English Conventions — matching the real Bluebook feel. */
-const RW_GROUP_ORDER: string[][] = [
-  ['Craft and Structure', 'Information and Ideas'],
-  ['Expression of Ideas'],
-  ['Standard English Conventions'],
+/** RW in-module ordering (canonical digital-SAT skill sequence):
+ *  vocab → reading comprehension (main idea / underline-function / paired
+ *  texts / textual evidence / inferences) → graphs → standard conventions →
+ *  transitions → notes (rhetorical synthesis). Within a skill: easy → hard.
+ *  Math ramps easy → hard. */
+const RW_SKILL_ORDER = [
+  'words-in-context',
+  'central-ideas-details',
+  'text-structure-purpose',
+  'cross-text-connections',
+  'command-evidence-textual',
+  'inferences',
+  'command-evidence-quantitative',
+  'boundaries',
+  'form-structure-sense',
+  'transitions',
+  'rhetorical-synthesis',
 ];
 
 /** Largest-remainder split of `total` across weights. */
@@ -133,6 +143,7 @@ interface Item {
   source_id: string;
   section: Section;
   domain: string;
+  skill: string;
   difficulty: Difficulty;
   type: 'mcq' | 'grid_in';
 }
@@ -365,18 +376,21 @@ function orderModule(spec: ModuleSpec, items: Item[]): Item[] {
     // ramp easy → hard, shuffled within a difficulty
     return [...D].flatMap((d) => shuffle(items.filter((q) => q.difficulty === d)));
   }
-  const out: Item[] = [];
-  const used = new Set<Item>();
-  for (const group of RW_GROUP_ORDER) {
-    const members = shuffle(items.filter((q) => group.includes(q.domain) && !used.has(q)));
-    for (const q of members) {
-      used.add(q);
-      out.push(q);
-    }
+  const rank = (q: Item): number => {
+    const i = RW_SKILL_ORDER.indexOf(q.skill);
+    return i === -1 ? RW_SKILL_ORDER.length : i;
   }
-  // domain-fallback picks may sit outside the quota domains — append them
-  for (const q of shuffle(items.filter((q) => !used.has(q)))) out.push(q);
-  return out;
+  // skill sequence, then easy → hard within a skill, shuffled tiebreak
+  const bucket = new Map<string, Item[]>();
+  for (const q of items) {
+    const k = `${rank(q)}|${q.difficulty}`;
+    const list = bucket.get(k) ?? [];
+    list.push(q);
+    bucket.set(k, list);
+  }
+  return [...bucket.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+    .flatMap(([, v]) => shuffle(v));
 }
 
 // ------------------------------------------------------------------- main
@@ -404,10 +418,11 @@ async function main(): Promise<void> {
         source_id: string;
         section: Section;
         domain: string;
+        skill: string;
         difficulty_internal: Difficulty;
         question_type: Item['type'];
       }>(
-        `SELECT source_id, section, domain, difficulty_internal, question_type
+        `SELECT source_id, section, domain, skill, difficulty_internal, question_type
          FROM harvested_questions
          WHERE origin = $1
            AND NOT (payload ? 'curated'
@@ -427,6 +442,7 @@ async function main(): Promise<void> {
           source_id: row.source_id,
           section: row.section,
           domain: row.domain,
+          skill: row.skill,
           difficulty: row.difficulty_internal,
           type: row.question_type,
         };

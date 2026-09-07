@@ -121,7 +121,7 @@ export default function ExamScreen({
           <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
             <p className="text-[16px] font-bold">Report question error</p>
             <p className="mt-1 text-[13px] text-[#5b616e]">
-              Question {index + 1} ({question.id}). What's wrong with it?
+              Question {index + 1} ({question.displayId ?? question.id}). What's wrong with it?
             </p>
             <textarea
               autoFocus

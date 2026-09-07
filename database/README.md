@@ -103,6 +103,10 @@ blueprint (RW 8/7/7/5, Math 8/8/3/3).
 - **Series B** (`origin='bluebook'`) — labels B1…B13
 - `practice_test_questions.source_id` is globally UNIQUE: zero question
   reuse across tests. Re-running `build:tests` wipes and rebuilds a series.
+- In-module order: RW follows the canonical skill sequence (vocab →
+  reading comp → graphs → conventions → transitions → notes; easy→hard
+  within a skill), Math ramps easy→hard. `scripts/reorder-practice-tests.ts`
+  renumbers existing tests' positions without rebuilding them.
 
 ## Simulator / web-client access (PostgREST)
 

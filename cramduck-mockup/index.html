@@ -1416,7 +1416,7 @@ function renderShelf(fixed){
   if(ids.length===0){el.innerHTML='<p class="mnote" style="max-width:420px">nothing on the shelf yet \u2014 mark a mistake fixed and it lands here</p>';return;}
   el.innerHTML=ids.map(id=>{
     const p=M_PAYLOADS[id]||{};
-    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div>'+idChips(TESTIDS[id])+'<span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
+    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||TESTIDS[id]||'question unavailable')+'<small>FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div>'+idChips(TESTIDS[id])+'<span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
   }).join('');
 }
 async function loadMistakes(){
@@ -1457,8 +1457,8 @@ async function loadMistakes(){
         mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)'),
       ]);
       for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);TESTIDS[r.source_id]=r.practice_tests.label+'-'+code+'-Q'+r.position;}
-      for(const r of(gen||[]))M_PAYLOADS[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
-      for(const r of(harv||[]))M_PAYLOADS[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
+      for(const r of(Array.isArray(gen)?gen:[]))M_PAYLOADS[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
+      for(const r of(Array.isArray(harv)?harv:[]))M_PAYLOADS[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
     }catch(e){}
   }
   if(open.length===0){list.innerHTML='<p class="mnote" style="max-width:420px">no mistakes yet \u2014 take a sim or a zen run and they\u2019ll collect themselves here</p>';}
@@ -1467,7 +1467,7 @@ async function loadMistakes(){
     const tag=o.mode==='exam'?'SAT SIM':'ZEN';
     const meta=[tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
     const thumb=p.img?'<img src="'+esc(p.img)+'" alt="" style="height:44px;border:1px solid var(--line);border-radius:3px;margin-top:6px;display:block;background:#fff">':'';
-    return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||o.id)+'<small>'+esc(meta)+'</small></div>'+thumb+idChips(TESTIDS[o.id])+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
+    return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||TESTIDS[o.id]||'question unavailable')+'<small>'+esc(meta)+'</small></div>'+thumb+idChips(TESTIDS[o.id])+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
   }).join('');
   list.dataset.loaded='1';
   renderShelf(fixed);
