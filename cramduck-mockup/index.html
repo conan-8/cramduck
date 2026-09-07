@@ -538,8 +538,10 @@ body:not([data-view="today"]) .mast{display:none}
 .chat-sugg button{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border:1.5px dashed var(--line);border-radius:999px;background:transparent;color:var(--muted);cursor:pointer;transition:all .12s}
 .chat-sugg button:hover{border-color:var(--ink);color:var(--ink);border-style:solid}
 .chat-widget{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:12px;padding:14px 16px;border:1.5px solid var(--ink);border-left:5px solid var(--accent);border-radius:3px;background:var(--sheet);box-shadow:3px 3px 0 var(--shadow);animation:msgin .35s cubic-bezier(.16,1,.3,1)}
-.chat-widget .cw-t{font-family:'Fraunces',serif;font-weight:700;font-size:16px;letter-spacing:-.01em}
-.chat-widget .cw-m{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.chat-widget .cw-t{font-family:'Fraunces',serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.chat-widget .cw-m{font-family:'Space Mono',monospace;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.chat-widget .cw-sub{font-family:'Space Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.16em;padding:9px 13px;border:2px solid var(--ink);border-radius:3px;background:var(--note3);color:var(--ink);box-shadow:2px 2px 0 var(--ink);flex:none}
+.chat-widget .cw-sub.math{background:var(--note4)}
 .chat-widget .cw-go{margin-left:auto;white-space:nowrap}
 
 </style>
@@ -1731,9 +1733,9 @@ let chatSlugs=null; // slug -> pretty name, lazy-loaded from the taxonomy
 async function chatLoadSlugs(){
   if(chatSlugs)return chatSlugs;
   try{
-    const nodes=await mfetch(SUP+'/rest/v1/taxonomy_nodes?select=kind,slug&order=code');
+    const nodes=await mfetch(SUP+'/rest/v1/taxonomy_nodes?select=kind,slug,parent_code&order=code');
     const map={};
-    for(const n of(nodes||[]))if(n.kind==='skill'&&n.slug)map[n.slug]=skPretty(n.slug);
+    for(const n of(nodes||[]))if(n.kind==='skill'&&n.slug)map[n.slug]={name:skPretty(n.slug),rw:String(n.parent_code||'').startsWith('SAT_RW')};
     chatSlugs=map;
   }catch(e){chatSlugs={};}
   return chatSlugs;
@@ -1751,7 +1753,8 @@ function addDrillWidgets(msgEl,drills){
   for(const d of drills){
     const w=document.createElement('div');
     w.className='chat-widget';
-    w.innerHTML='<div><div class="cw-t">'+esc(chatSlugs[d.slug]||d.slug)+'</div><div class="cw-m">DRILL &middot; '+d.count+' QUESTIONS &middot; ZEN MODE</div></div>';
+    const info=chatSlugs[d.slug]||{name:d.slug,rw:false};
+    w.innerHTML='<span class="cw-sub'+(info.rw?'':' math')+'">'+(info.rw?'R&amp;W':'MATH')+'</span><div><div class="cw-t">'+esc(info.name)+'</div><div class="cw-m">DRILL &middot; '+d.count+' QUESTIONS &middot; ZEN MODE</div></div>';
     const b=document.createElement('button');
     b.className='btn pri cw-go';
     b.textContent='Start \u2192';
