@@ -599,7 +599,7 @@ body:not([data-view="today"]) .mast{display:none}
           <div class="stat" id="st-improved"><div class="l">Most improved</div><span class="v" id="st-improved-n">–</span><div class="d" id="st-improved-d">skill</div></div>
           <div class="stat rd" id="st-weakest"><div class="l">Weakest skill</div><span class="v" id="st-weakest-n">–</span><div class="d" id="st-weakest-d">skill</div></div>
         </div>
-        <a class="resume" data-goto="sim"><span class="pl">&#9654;</span><span class="rt">Back to it &mdash; SAT Practice Test #1</span><span class="rm" id="resume-meta">MATH MODULE 2 — 18:24 LEFT</span></a>
+        <a class="resume" data-goto="sim" style="display:none"><span class="pl">&#9654;</span><span class="rt">Back to it &mdash; SAT Practice Test #1</span><span class="rm" id="resume-meta">MATH MODULE 2 — 18:24 LEFT</span></a>
         <div class="grid2">
           <div class="panel">
             <div class="ph"><span class="t">Today's plan <b>· 3 items</b></span><span class="t">one module a day</span></div>
@@ -1255,9 +1255,12 @@ function adoptUser(u,token){
   if(token)MH.Authorization='Bearer '+token;
 }
 const niceName=()=>{const l=(USER_NAME||USER_EMAIL||'').split('@')[0];return l?l.charAt(0).toUpperCase()+l.slice(1):'';};
+const OWNER_EMAIL='yiconan885@gmail.com';
 function renderAcct(){
   const gn=document.getElementById('greet-name');
   if(gn)gn.textContent=(niceName()||'friend')+'.';
+  const rb=document.querySelector('a.resume');
+  if(rb)rb.style.display=(USER_EMAIL||'').toLowerCase()===OWNER_EMAIL?'':'none';
   const av=document.getElementById('acct-avatar'),nm=document.getElementById('acct-name');
   if(!av||!nm)return;
   // no sign-in wiring — the chip is just the settings affordance; the

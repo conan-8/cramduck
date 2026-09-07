@@ -5,17 +5,17 @@
  *   - Vercel serverless function (api/chat.ts)
  *   - local dev server (scripts/serve.ts)
  *
- * Calls OpenRouter (deepseek/deepseek-v4-flash-0731, medium reasoning effort).
+ * Calls OpenRouter (inclusionai/ling-3.0-flash-fin, medium reasoning effort).
  * Only the final answer is returned to the client — reasoning content is
  * never forwarded.
  *
  * Env:
  *   OPENROUTER_API_KEY   required (same key as the question generator)
- *   CHAT_MODEL           optional; defaults to deepseek/deepseek-v4-flash-0731
+ *   CHAT_MODEL           optional; defaults to inclusionai/ling-3.0-flash-fin
  */
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash-0731';
+const DEFAULT_MODEL = 'inclusionai/ling-3.0-flash-fin';
 const MAX_MESSAGES = 24;
 const MAX_CONTENT = 8000;
 const MAX_CONTEXT = 2000;
