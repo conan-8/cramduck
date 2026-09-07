@@ -6,13 +6,12 @@ import ReviewScreen from '../components/ReviewScreen'
 import TransitionScreen from '../components/TransitionScreen'
 import BreakScreen from '../components/BreakScreen'
 import ResultsScreen from '../components/ResultsScreen'
-import LockScreen from '../components/LockScreen'
 import { assembleTest, fetchBank, fetchPracticeTest, fetchPracticeTestLabels, isCorrect, MODULE2_HARD_THRESHOLD, postEvents, selectQuestions, type PracticeTest, type SourceKind, type TestFocus } from '../data/live'
 import { clearCalcState } from '../lib/desmos'
 import { probeApi, reportQuestionError } from '../lib/reviewApi'
 import type { ExamModule } from '../types/exam'
 
-type Screen = 'start' | 'intro' | 'exam' | 'review' | 'transition' | 'break' | 'results'
+type Screen = 'start' | 'exam' | 'review' | 'transition' | 'break' | 'results'
 
 // The 10-minute break sits between Section 1 (Reading and Writing) and Section 2 (Math).
 const BREAK_BEFORE_MODULE = 2
@@ -27,7 +26,7 @@ export default function Home() {
       ? focusParam
       : null
   // ?test=A3 pins a specific pre-built practice test (otherwise the
-  // start-screen dropdown decides; random in the series when unset)
+  // start-screen dropdown decides)
   const urlTestLabel = searchParams.get('test') ?? undefined
   const [screen, setScreen] = useState<Screen>('start')
   const [test, setTest] = useState<ExamModule[]>([])
@@ -39,7 +38,6 @@ export default function Home() {
   const [pendingStart, setPendingStart] = useState<{
     source: SourceKind
     excludeBluebook: boolean
-    verifiedOnly: boolean
   } | null>(null)
   const [moduleIdx, setModuleIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -174,10 +172,10 @@ export default function Home() {
     setScreen('exam')
   }
 
-  const startTest = (source: SourceKind, excludeBluebook: boolean, verifiedOnly: boolean, pickedLabel?: string) => {
+  const startTest = (source: SourceKind, excludeBluebook: boolean, pickedLabel?: string) => {
     // Fresh test: the graphing calculator must not carry over any previous work.
     clearCalcState()
-    setPendingStart({ source, excludeBluebook, verifiedOnly })
+    setPendingStart({ source, excludeBluebook })
     Promise.resolve(bank ?? fetchBank())
       .then(async (b) => {
         setBank(b)
@@ -188,18 +186,22 @@ export default function Home() {
           if (p) {
             setPractice(p)
             // module-2 slots are filled with the hard variant until routing decides
-            setTest([p.rw1, p.rw2hard, p.math1, p.math2hard])
+            const mods = [p.rw1, p.rw2hard, p.math1, p.math2hard]
+            setTest(mods)
             setAnswers({})
             setFlags({})
             setCrossed({})
             setError(null)
-            setScreen('intro')
+            setModuleIdx(0)
+            setIndex(0)
+            setSecondsLeft(mods[0]!.minutes * 60)
+            setScreen('exam')
             return
           }
         }
         setPractice(null)
         const assembled = assembleTest(
-          selectQuestions(b, source, excludeBluebook, verifiedOnly),
+          selectQuestions(b, source, excludeBluebook),
           focus ?? undefined,
         )
         if (assembled.length === 0) {
@@ -211,7 +213,10 @@ export default function Home() {
         setFlags({})
         setCrossed({})
         setError(null)
-        setScreen('intro')
+        setModuleIdx(0)
+        setIndex(0)
+        setSecondsLeft(assembled[0]!.minutes * 60)
+        setScreen('exam')
       })
        .catch((err) => setError(`Could not load questions: ${String(err)}`))
        .finally(() => setPendingStart(null))
@@ -265,10 +270,6 @@ export default function Home() {
         error={error}
       />
     )
-  }
-
-  if (screen === 'intro') {
-    return <LockScreen onDone={() => beginModule(0)} />
   }
 
   if (screen === 'exam') {
