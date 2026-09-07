@@ -5,7 +5,7 @@
  *
  *   bluebook-mockup/dist/index.html    -> cramduck-mockup/bluebook-practice-test.html
  *   bluebook-mockup/dist/renderers.js  -> cramduck-mockup/renderers.js
- *   bluebook-mockup/dist/favicon.png   -> cramduck-mockup/favicon.png
+ *   bluebook-mockup/dist/favicon-sim.png -> cramduck-mockup/favicon-sim.png
  *   bluebook-mockup/dist/assets/*      -> cramduck-mockup/assets/
  *   research/sat/assets/ssqb-*.png     -> cramduck-mockup/assets/
  *
@@ -80,11 +80,12 @@ function main(): void {
   const renderersCopied = copyIfChanged(path.join(DIST_DIR, 'renderers.js'), path.join(DEST_DIR, 'renderers.js'));
   console.log(`sync-app: dist/renderers.js -> cramduck-mockup/renderers.js (${renderersCopied ? 'copied' : 'unchanged'})`);
 
-  // Step 2b: favicon (tab icon for the simulator page)
-  const faviconSrc = path.join(DIST_DIR, 'favicon.png');
+  // Step 2b: simulator favicon (tab icon for sim/zen/mastery pages; the hub
+  // and landing keep their own cramduck-mockup/favicon.png, not synced)
+  const faviconSrc = path.join(DIST_DIR, 'favicon-sim.png');
   if (fs.existsSync(faviconSrc)) {
-    const faviconCopied = copyIfChanged(faviconSrc, path.join(DEST_DIR, 'favicon.png'));
-    console.log(`sync-app: dist/favicon.png -> cramduck-mockup/favicon.png (${faviconCopied ? 'copied' : 'unchanged'})`);
+    const faviconCopied = copyIfChanged(faviconSrc, path.join(DEST_DIR, 'favicon-sim.png'));
+    console.log(`sync-app: dist/favicon-sim.png -> cramduck-mockup/favicon-sim.png (${faviconCopied ? 'copied' : 'unchanged'})`);
   }
 
   // Step 3: mirror dist/assets/

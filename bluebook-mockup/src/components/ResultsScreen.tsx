@@ -35,7 +35,8 @@ function QuestionReview({ q, number, answer }: { q: Question; number: number; an
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#8a8f99]">
-          {number} · {q.skill}
+          {number}
+          {q.displayId ? ` · ${q.displayId}` : ''} · {q.skill}
         </p>
         <RichText
           text={q.prompt}
@@ -137,6 +138,11 @@ export default function ResultsScreen({ test, answers, testLabel, onExit }: Resu
 
       <main className="relative z-10 flex flex-col items-center px-6 py-12">
         <h1 className="text-[34px] font-bold">You're All Finished!</h1>
+        {testLabel && (
+          <p className="mt-2 rounded-full border border-[#4a5170] px-4 py-1 font-mono text-[12px] font-bold uppercase tracking-[1.4px] text-[#f7d54d]">
+            Test {testLabel}
+          </p>
+        )}
 
         <div className="mt-8 grid w-full max-w-2xl grid-cols-3 gap-4 rounded-2xl bg-white p-6 text-center text-[#1c1c1e]">
           <div>

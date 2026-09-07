@@ -44,7 +44,9 @@ body[data-mode="blueprint"]::after{content:"";position:fixed;inset:0;pointer-eve
 @media(max-width:980px){.shell{grid-template-columns:1fr}.sidebar{position:static!important;width:auto!important;height:auto!important;border-right:none!important;border-bottom:1.5px solid var(--ink);flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 4vw!important}.sidebar .nav{flex-direction:row!important;flex-wrap:wrap;flex:0 0 auto;overflow:visible!important;mask-image:none!important;animation:none!important;margin:0}.sidebar .side-foot{display:none}}
 
 .sidebar{background:var(--side);border-right:1.5px solid var(--ink);padding:22px 18px;display:flex;flex-direction:column;gap:22px;transition:background .5s;position:sticky;top:0;height:100vh}
-.sb-brand{font-family:'Fraunces',serif;font-weight:900;font-size:26px;letter-spacing:-.01em;flex-shrink:0}
+.sb-brand{font-family:'Fraunces',serif;font-weight:900;font-size:26px;letter-spacing:-.01em;flex-shrink:0;cursor:pointer;user-select:none}
+.sb-row{display:flex;align-items:center;gap:10px}
+.sb-duck{width:36px;height:auto;flex:none}
 .sb-brand span{color:var(--accent)}
 .sb-brand small{display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 @property --nav-fade-top{syntax:'<length>';initial-value:0px;inherits:false}
@@ -419,6 +421,8 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .mrow .mq{flex:1;min-width:0;font-size:14px;font-weight:600}
 .mrow .mq small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
 .mtag{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:2px;padding:4px 8px;color:var(--muted);white-space:nowrap}
+.mtag.tid{border-color:var(--accent);color:var(--accent);font-weight:700}
+.mtag.qid{border-color:var(--ink);color:var(--ink)}
 .mrow .mact{display:flex;gap:8px;opacity:0;transform:translateX(8px);transition:all .2s;flex:none}
 .mrow:hover .mact{opacity:1;transform:none}
 .mini{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:7px 11px;border-radius:3px;border:1.5px solid var(--ink);background:var(--sheet);color:var(--ink);cursor:pointer;transition:all .12s}
@@ -605,7 +609,7 @@ body:not([data-view="today"]) .mast{display:none}
 <div class="shell">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sb-brand">Cram<span>duck</span><small>Study system · v0.3</small></div>
+    <div class="sb-brand" id="sb-brand" role="button" tabindex="0" title="Back to Today"><div class="sb-row"><img class="sb-duck" src="duck.png" alt="" />Cram<span>duck</span></div><small>Study system · v0.3</small></div>
     <nav class="nav">
       <div class="navbox">
         <div class="nb-t">Overview</div>
@@ -1022,6 +1026,9 @@ function goView(name){
   if(name==='chat')chatBoot();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+const sbBrand=document.getElementById('sb-brand');
+sbBrand.addEventListener('click',()=>goView('today'));
+sbBrand.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goView('today');}});
 
 /* sidebar nav — fade only when it actually overflows */
 (function(){
@@ -1211,7 +1218,7 @@ document.getElementById('sim-start').addEventListener('click',()=>{
    breaks on a 60+ min gap or a mode switch; every number is graded from
    the recorded answers, nothing invented */
 const SIM_GAP=60*60000;
-let SIM_SESSIONS=[],SIM_MAP={},SIM_SEL=-1;
+let SIM_SESSIONS=[],SIM_MAP={},SIM_SEL=-1,SIM_TIDS={}; /* question_id -> {full,label} practice-test ids */
 const SIM_MODE={exam:'TIMED RUN',practice:'ZEN MODE',diagnostic:'DIAGNOSTIC'};
 const SIM_TITLE={exam:'Digital SAT \u2014 timed run',practice:'Zen mode \u2014 practice stream',diagnostic:'Diagnostic \u2014 placement run'};
 function simStats(s){
@@ -1238,6 +1245,14 @@ function simScaled(st){
   return{score:st.a?Math.round(st.c/st.a*1600):0,max:1600,scope:'PRACTICE'};
 }
 const fmtDateBig=iso=>new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+/* which practice test a session ran: majority label among its mapped questions */
+function simTestOf(s){
+  const c={};
+  for(const e of s.evts){const t=SIM_TIDS[e.question_id];if(t)c[t.label]=(c[t.label]||0)+1;}
+  let best=null,n=0;
+  for(const k in c)if(c[k]>n){n=c[k];best=k;}
+  return best;
+}
 async function loadSim(){
   await AUTH_READY;
   const recs=document.getElementById('simrecs'),rep=document.getElementById('score-report');
@@ -1270,6 +1285,9 @@ async function loadSim(){
       SIM_MAP[r.question_id]={skill:(r.payload.taxonomyCode||'').split(':')[1],section:subj==='SAT_RW'?'rw':'math'};
     }
     for(const r of(harv||[]))SIM_MAP[r.source_id]={skill:r.payload.curated?.skill??r.payload.skill,section:(r.section||'').indexOf('math')===0?'math':'rw'};
+    let ptq=[];
+    try{ptq=await mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)');}catch(e){}
+    for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);SIM_TIDS[r.source_id]={full:r.practice_tests.label+'-'+code+'-Q'+r.position,label:r.practice_tests.label};}
   }
   if(sessions.length===0){
     recs.innerHTML='<p class="mnote" style="max-width:460px">no runs yet \u2014 launch one above and it lands here, scored from your actual answers</p>';
@@ -1278,10 +1296,11 @@ async function loadSim(){
   recs.innerHTML=sessions.map((s,i)=>{
     const st=simStats(s);
     const sc=simScaled(st);
+    const tl=simTestOf(s);
     const chips=['math','rw'].filter(k=>st.sec[k]).map(k=>'<i class="done">'+(k==='math'?'MATH':'R&amp;W')+' \u00b7 '+st.sec[k].a+'</i>').join('');
     return '<div class="simrec"><div class="sr-main">'+
       '<h3>'+fmtDateBig(new Date(s.start).toISOString())+'</h3>'+
-      '<div class="sr-st done">'+SIM_MODE[s.mode]+'</div>'+
+      '<div class="sr-st done">'+SIM_MODE[s.mode]+(tl?' \u00b7 TEST '+esc(tl):'')+'</div>'+
       '<div class="sr-meta">'+sc.scope+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+' \u00b7 '+simDur(st.time)+'</div>'+
       '<div class="mods">'+chips+'</div></div>'+
       '<div class="sr-score"><span class="sat">'+sc.score+'<small>/'+sc.max+'</small></span>'+
@@ -1296,7 +1315,7 @@ function simReport(i){
   SIM_SEL=i;
   const rep=document.getElementById('score-report');rep.style.display='';
   const st=simStats(s);
-  document.getElementById('sr-title').innerHTML='SCORE REPORT <b>\u00b7 RUN '+(i+1)+' OF '+SIM_SESSIONS.length+'</b>';
+  document.getElementById('sr-title').innerHTML='SCORE REPORT <b>\u00b7 '+((simTestOf(s)?'TEST '+esc(simTestOf(s))+' \u00b7 ':'')+'RUN '+(i+1)+' OF '+SIM_SESSIONS.length)+'</b>';
   document.getElementById('sr-when').textContent=fmtDate(new Date(s.start).toISOString())+' \u00b7 '+SIM_MODE[s.mode]+' \u00b7 GRADED FROM YOUR ANSWERS';
   const prev=i>0?simStats(SIM_SESSIONS[i-1]):null;
   const priorSkill={};
@@ -1452,6 +1471,12 @@ document.getElementById('acct-settings').addEventListener('click',e=>{e.stopProp
 
 let M_PAYLOADS={};
 let TESTIDS={}; /* source_id -> practice-test display id (A2-RW2-Q20) */
+/* test-ID chip (A2) + full question-ID chip (A2-RW2-Q20) */
+const idChips=tid=>{
+  if(!tid)return '';
+  const tl=tid.split('-')[0];
+  return '<span class="mtag tid">'+esc(tl)+'</span><span class="mtag qid">'+esc(tid)+'</span>';
+};
 function renderShelf(fixed){
   const el=document.getElementById('slist');
   const ids=Object.keys(fixed).sort((a,b)=>fixed[b]-fixed[a]);
@@ -1460,7 +1485,7 @@ function renderShelf(fixed){
   if(ids.length===0){el.innerHTML='<p class="mnote" style="max-width:420px">nothing on the shelf yet \u2014 mark a mistake fixed and it lands here</p>';return;}
   el.innerHTML=ids.map(id=>{
     const p=M_PAYLOADS[id]||{};
-    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>'+(TESTIDS[id]?esc(TESTIDS[id])+' \u00b7 ':'')+'FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div><span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
+    return '<div class="mrow" data-k="s" data-id="'+esc(id)+'"><div class="mq">'+cleanStem(p.stem||id)+'<small>FIXED \u00b7 '+fmtDate(new Date(fixed[id]).toISOString())+'</small></div>'+idChips(TESTIDS[id])+'<span class="mtag">FIXED</span><div class="mact"><button class="mini retry">RETRY</button></div></div>';
   }).join('');
 }
 async function loadMistakes(){
@@ -1509,9 +1534,9 @@ async function loadMistakes(){
   else list.innerHTML=open.map(o=>{
     const p=M_PAYLOADS[o.id]||{};
     const tag=o.mode==='exam'?'SAT SIM':'ZEN';
-    const meta=[TESTIDS[o.id],tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
+    const meta=[tag,p.domain,p.skill,fmtDate(o.date),(o.missed>1?'MISSED '+o.missed+'\u00d7':'')].filter(Boolean).join(' \u00b7 ');
     const thumb=p.img?'<img src="'+esc(p.img)+'" alt="" style="height:44px;border:1px solid var(--line);border-radius:3px;margin-top:6px;display:block;background:#fff">':'';
-    return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||o.id)+'<small>'+esc(meta)+'</small></div>'+thumb+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
+    return '<div class="mrow" data-k="m" data-id="'+esc(o.id)+'"><div class="mq">'+cleanStem(p.stem||o.id)+'<small>'+esc(meta)+'</small></div>'+thumb+idChips(TESTIDS[o.id])+'<span class="mtag">'+tag+'</span><div class="mact"><button class="mini retry">RETRY</button><button class="mini fix">MARK FIXED</button></div></div>';
   }).join('');
   list.dataset.loaded='1';
   renderShelf(fixed);
