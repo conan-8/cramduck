@@ -260,6 +260,22 @@
   color: var(--sheet);
   box-shadow: 3px 3px 0 var(--accent);
 }
+.ps-opt.glow {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.ps-opt.glow:hover {
+  box-shadow:
+    3px 3px 0 var(--accent),
+    0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.ps-opt.glow.on {
+  box-shadow:
+    3px 3px 0 var(--accent),
+    0 0 22px color-mix(in srgb, var(--accent) 60%, transparent);
+}
 .ps-opt .n {
   font-family: 'Sora', sans-serif;
   font-weight: 700;

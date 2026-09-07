@@ -104,13 +104,23 @@ const GRID_MIX: Record<Tier, [number, number, number]> = {
   hard: [0.0, 0.2, 0.8],
 };
 
-/** RW in-module ordering: passage domains first (Craft & Structure +
- *  Information & Ideas, interleaved), then Expression of Ideas, then
- *  Standard English Conventions — matching the real Bluebook feel. */
-const RW_GROUP_ORDER: string[][] = [
-  ['Craft and Structure', 'Information and Ideas'],
-  ['Expression of Ideas'],
-  ['Standard English Conventions'],
+/** RW in-module ordering (skill-level): vocab first, then the other reading
+ *  skills, then graphs (quantitative evidence), then Standard English
+ *  Conventions, then transitions, and notes (rhetorical synthesis) last —
+ *  matching the real Bluebook feel. */
+const RW_SKILL_ORDER: string[][] = [
+  ['words-in-context'],
+  [
+    'text-structure-purpose',
+    'cross-text-connections',
+    'central-ideas-details',
+    'command-evidence-textual',
+    'inferences',
+  ],
+  ['command-evidence-quantitative'],
+  ['boundaries', 'form-structure-sense'],
+  ['transitions'],
+  ['rhetorical-synthesis'],
 ];
 
 /** Largest-remainder split of `total` across weights. */
@@ -133,6 +143,7 @@ interface Item {
   source_id: string;
   section: Section;
   domain: string;
+  skill: string;
   difficulty: Difficulty;
   type: 'mcq' | 'grid_in';
 }
@@ -367,14 +378,14 @@ function orderModule(spec: ModuleSpec, items: Item[]): Item[] {
   }
   const out: Item[] = [];
   const used = new Set<Item>();
-  for (const group of RW_GROUP_ORDER) {
-    const members = shuffle(items.filter((q) => group.includes(q.domain) && !used.has(q)));
+  for (const group of RW_SKILL_ORDER) {
+    const members = shuffle(items.filter((q) => group.includes(q.skill) && !used.has(q)));
     for (const q of members) {
       used.add(q);
       out.push(q);
     }
   }
-  // domain-fallback picks may sit outside the quota domains — append them
+  // domain/skill-fallback picks may sit outside the expected skills — append them
   for (const q of shuffle(items.filter((q) => !used.has(q)))) out.push(q);
   return out;
 }
@@ -404,10 +415,11 @@ async function main(): Promise<void> {
         source_id: string;
         section: Section;
         domain: string;
+        skill: string;
         difficulty_internal: Difficulty;
         question_type: Item['type'];
       }>(
-        `SELECT source_id, section, domain, difficulty_internal, question_type
+        `SELECT source_id, section, domain, skill, difficulty_internal, question_type
          FROM harvested_questions
          WHERE origin = $1
            AND NOT (payload ? 'curated'
@@ -427,6 +439,7 @@ async function main(): Promise<void> {
           source_id: row.source_id,
           section: row.section,
           domain: row.domain,
+          skill: row.skill,
           difficulty: row.difficulty_internal,
           type: row.question_type,
         };
