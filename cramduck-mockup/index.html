@@ -1528,6 +1528,7 @@ document.getElementById('acct-settings').addEventListener('click',e=>{e.stopProp
 
 let M_PAYLOADS={};
 let TESTIDS={}; /* source_id -> practice-test display id (A2-RW2-Q20) */
+let TESTTIERS={}; /* source_id -> module-2 tier (easy|hard), when module 2 */
 /* test-ID chip (A2) + full question-ID chip (A2-RW2-Q20) */
 const idChips=tid=>{
   if(!tid)return '';
@@ -1580,9 +1581,9 @@ async function loadMistakes(){
       const[gen,harv,ptq]=await Promise.all([
         mfetch(SUP+'/rest/v1/question_versions?question_id=in.('+enc+')&review_status=eq.approved&select=question_id,payload'),
         mfetch(SUP+'/rest/v1/harvested_questions?source_id=in.('+enc+')&select=source_id,payload'),
-        mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,position,practice_tests!inner(label)'),
+        mfetch(SUP+'/rest/v1/practice_test_questions?source_id=in.('+enc+')&select=source_id,section,module,tier,position,practice_tests!inner(label)'),
       ]);
-      for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);TESTIDS[r.source_id]=r.practice_tests.label+'-'+code+'-Q'+r.position;}
+      for(const r of(Array.isArray(ptq)?ptq:[])){const code=r.section==='reading-writing'?('RW'+r.module):('M'+r.module);TESTIDS[r.source_id]=r.practice_tests.label+'-'+code+'-Q'+r.position;if(r.module===2)TESTTIERS[r.source_id]=r.tier;}
       for(const r of(Array.isArray(gen)?gen:[]))M_PAYLOADS[r.question_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??(r.payload.taxonomyCode||'').split(':')[1],skill:r.payload.curated?.skill??'',img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
       for(const r of(Array.isArray(harv)?harv:[]))M_PAYLOADS[r.source_id]={stem:r.payload.curated?.prompt??r.payload.stem,domain:r.payload.curated?.domain??r.payload.domain,skill:r.payload.curated?.skill??r.payload.skill,img:r.payload.curated?.diagram?'/'+r.payload.curated.diagram:(r.payload.stimulus?.figureAsset?'/'+r.payload.stimulus.figureAsset:null)};
     }catch(e){}
@@ -1611,7 +1612,7 @@ document.addEventListener('click',e=>{
   const retry=e.target.closest('.mrow .retry');
   const fix=e.target.closest('.mrow .fix');
   if(retry){e.stopPropagation();const row=retry.closest('.mrow');
-    if(row.dataset.id){window.open('bluebook-practice-test.html#/zen?retry='+encodeURIComponent(row.dataset.id),'_blank');}
+    if(row.dataset.id){const rid=TESTIDS[row.dataset.id]||row.dataset.id;const rt=TESTTIERS[row.dataset.id];window.open('bluebook-practice-test.html#/zen?retry='+encodeURIComponent(rid)+(rt?'&tier='+rt:''),'_blank');}
     else goView('zen');return;}
   if(fix){e.stopPropagation();const row=fix.closest('.mrow');if(row.classList.contains('fixed'))return;
     row.classList.add('fixed');row.style.display='none';

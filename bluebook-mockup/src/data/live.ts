@@ -622,6 +622,23 @@ export async function fetchPracticeTestLabels(): Promise<{ A: string[]; B: strin
  *  thresholds used by Princeton Review's adaptive practice tests. */
 export const MODULE2_HARD_THRESHOLD: Record<'rw' | 'math', number> = { rw: 15, math: 14 }
 
+/** Resolve a practice-test display id (A2-RW2-Q20 / B3-M1-Q6) to the bank
+ *  question's source_id. Module 2 easy/hard variants share display ids, so
+ *  `tier` disambiguates. Returns the input unchanged when it is not a
+ *  display id (e.g. a raw source_id) or no mapping exists. */
+export async function resolveDisplayId(idOrDisplay: string, tier?: string): Promise<string> {
+  const m = /^([AB]\d+)-(RW1|RW2|M1|M2)-Q(\d+)$/.exec(idOrDisplay)
+  if (!m) return idOrDisplay
+  const [, label, mod, qn] = m
+  const section = mod!.startsWith('RW') ? 'reading-writing' : 'math'
+  const module = mod!.endsWith('1') ? 1 : 2
+  const tierParam = module === 2 && (tier === 'easy' || tier === 'hard') ? `&tier=eq.${tier}` : ''
+  const rows = (await fetchAllPages(
+    `${SUPABASE_URL}/rest/v1/practice_test_questions?select=source_id,practice_tests!inner(label)&practice_tests.label=eq.${label}&section=eq.${section}&module=eq.${module}&position=eq.${Number(qn)}${tierParam}`,
+  )) as Array<{ source_id: string }>
+  return rows[0]?.source_id ?? idOrDisplay
+}
+
 /** Build a 4-module digital-SAT-shaped test at real domain ratios.
  *  `focus` narrows the run to one module, or one full section. */
 export function assembleTest(questions: BankQuestion[], focus?: TestFocus): ExamModule[] {

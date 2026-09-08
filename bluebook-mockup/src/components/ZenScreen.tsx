@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calculator, LogOut } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import type { BankQuestion, ZenDifficulty, ZenSubject } from '../data/live'
-import { fetchBank, isCorrect, postEvents, selectBySkills, selectZen } from '../data/live'
+import { fetchBank, isCorrect, postEvents, resolveDisplayId, selectBySkills, selectZen } from '../data/live'
 import DesmosCalculatorPanel from './DesmosCalculatorPanel'
 import QuestionView from './QuestionView'
 import RichText from './RichText'
@@ -77,6 +77,9 @@ export default function ZenScreen() {
   const lastIdRef = useRef<string | null>(null)
   const shownAtRef = useRef<number>(0)
   const retryId = searchParams.get('retry')
+  const retryTier = searchParams.get('tier') ?? undefined
+  // display ids (A2-RW2-Q20) resolve to source_ids before matching questions
+  const [resolvedRetryId, setResolvedRetryId] = useState<string | null>(retryId)
   const skillsList = useMemo(() => {
     const raw = searchParams.get('skills')
     return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : []
@@ -105,14 +108,18 @@ export default function ZenScreen() {
   useEffect(() => {
     let cancelled = false
     fetchBank()
-      .then((b) => {
+      .then(async (b) => {
         if (cancelled) return
         setBank(b)
         // Entering via "RETRY" from Mistakes: that question served first.
+        // The retry id may be a practice-test display id (A2-RW2-Q20).
         if (retryId) {
-          const target = [...b.generated, ...b.harvested].find((q) => q.id === retryId)
+          const resolved = await resolveDisplayId(retryId, retryTier).catch(() => retryId)
+          if (cancelled) return
+          setResolvedRetryId(resolved)
+          const target = [...b.generated, ...b.harvested].find((q) => q.id === resolved)
           if (target) {
-            const rest = shuffle(selectZen(b, 'all', 'standard').filter((q) => q.id !== retryId))
+            const rest = shuffle(selectZen(b, 'all', 'standard').filter((q) => q.id !== resolved))
             startWith([target, ...rest], 0)
           }
           return
@@ -335,7 +342,7 @@ export default function ZenScreen() {
           <span className="mt-0.5 inline-block rounded-full bg-[#1e2350] px-3 py-0.5 text-[12px] font-bold tracking-wide text-white">
             ZEN MODE
           </span>
-          {retryId && question.id === retryId && (
+          {retryId && question.id === resolvedRetryId && (
             <span className="mt-0.5 ml-2 inline-block rounded-full bg-[#c62828] px-3 py-0.5 text-[12px] font-bold tracking-wide text-white">
               DRILLING A MISTAKE
             </span>
