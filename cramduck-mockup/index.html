@@ -1077,10 +1077,10 @@ function sBarChart(containerId,readoutId,labels,values,unit){
   let bars='',xs='';
   for(let i=0;i<values.length;i++){
     const h=Math.round(values[i]/max*100);
-    bars+='<div class="bc-col" data-i="'+i+'"><div class="bc-bar" style="height:'+h+'%"></div></div>';
+    bars+='<div class="bc-col" data-i="'+i+'"><div class="bc-bar" style="height:'+h+'%'+(values[i]?'':';visibility:hidden')+'"></div></div>';
     xs+='<span>'+labels[i]+'</span>';
   }
-  el.innerHTML='<div class="bc-y"><span>'+max+'</span><span>'+mid+'</span><span>0</span></div>'+
+  el.innerHTML='<div class="bc-y"><span>'+max+'</span><span>'+(mid>0&&mid<max?mid:'')+'</span><span>0</span></div>'+
     '<div class="bc-main"><div class="bc-plot">'+bars+'</div><div class="bc-xrow">'+xs+'</div></div>';
   const ro=document.getElementById(readoutId);
   el.querySelectorAll('.bc-col').forEach(c=>{
