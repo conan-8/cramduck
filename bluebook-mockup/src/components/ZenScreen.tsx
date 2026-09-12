@@ -395,7 +395,7 @@ export default function ZenScreen() {
         </div>
       </header>
 
-      <main className="flex flex-1 overflow-hidden bg-white">
+      <main className="relative flex flex-1 overflow-hidden bg-white">
         {!module.split && (
           <DesmosCalculatorPanel
             moduleId="zen"

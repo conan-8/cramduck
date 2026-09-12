@@ -17,11 +17,12 @@ interface DesmosCalculatorPanelProps {
 }
 
 /**
- * Docked Desmos graphing calculator (real Desmos API). Sits at the left edge
- * of the question area — while it is open, the question shifts into the
- * remaining space on the right. Drag the divider handle to resize. The Desmos
- * instance stays mounted while closed so work is never lost, and its graph
- * state is also persisted across screens (per module) via lib/desmos.
+ * Floating Desmos graphing calculator (real Desmos API). Overlays the left edge
+ * of the question area on top of the content — while it is open it covers the
+ * left pane (e.g. the student-produced-response directions) instead of pushing
+ * the question into a third column. Drag the divider handle to resize. The
+ * Desmos instance stays mounted while closed so work is never lost, and its
+ * graph state is also persisted across screens (per module) via lib/desmos.
  */
 export default function DesmosCalculatorPanel({ moduleId, open, onClose }: DesmosCalculatorPanelProps) {
   const panelRef = useRef<HTMLElement>(null)
@@ -83,7 +84,7 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
       ref={panelRef}
       role="dialog"
       aria-label="Desmos graphing calculator"
-      className={`relative h-full shrink-0 flex-col border-r border-[#c9cede] bg-white ${
+      className={`absolute left-0 top-0 z-30 h-full flex-col border-r border-[#c9cede] bg-white shadow-[0_18px_50px_rgba(16,31,60,0.28)] ${
         open ? 'flex' : 'hidden'
       } ${width === null ? 'w-1/2' : ''}`}
       style={{ width: width ?? undefined }}

@@ -79,7 +79,7 @@ export default function ExamScreen({
         </div>
       </div>
 
-      <main className="flex flex-1 overflow-hidden bg-white">
+      <main className="relative flex flex-1 overflow-hidden bg-white">
         {isMath && (
           <DesmosCalculatorPanel
             key={module.id}

@@ -45,6 +45,9 @@ export default function Home() {
   const [crossed, setCrossed] = useState<Record<string, string[]>>({})
   const [index, setIndex] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(0)
+  // Render-safe snapshot of dwellRef — taken on each module submit so the
+  // results screen (and its breakdown handoff) can show per-question times.
+  const [times, setTimes] = useState<Record<string, number>>({})
   const [apiBase, setApiBase] = useState<string | null>(null)
 
   useEffect(() => {
@@ -109,6 +112,7 @@ export default function Home() {
         (dwellRef.current[lastQRef.current] ?? 0) + (now - switchRef.current)
       switchRef.current = now
     }
+    setTimes({ ...dwellRef.current })
     const events = m.questions
       .filter((q) => ans[q.id] !== undefined)
       .map((q) => ({
@@ -181,6 +185,7 @@ export default function Home() {
     lastQRef.current = null
     switchRef.current = 0
     postedRef.current = new Set()
+    setTimes({})
     setPendingStart({ source, excludeBluebook })
     Promise.resolve(bank ?? fetchBank())
       .then(async (b) => {
@@ -327,7 +332,7 @@ export default function Home() {
       test={test}
       answers={answers}
       testLabel={practice?.label}
-      times={{ ...dwellRef.current }}
+      times={times}
       onExit={exitToStart}
     />
   )

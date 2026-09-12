@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Bookmark, ChevronsLeftRight } from 'lucide-react'
 import type { ExamModule, Question, TableSpec } from '../types/exam'
+import { isCorrect } from '../data/live'
 import AnswerOptions from './AnswerOptions'
 import DiagramPlaceholder from './DiagramPlaceholder'
 import RichText from './RichText'
@@ -294,7 +295,9 @@ export default function QuestionView({
         aria-label="Enter your answer"
         className={`w-52 rounded-md border px-4 py-2 text-center font-exam-serif text-2xl tracking-[0.25em] outline-none ${
           reveal
-            ? 'border-[#2e7d32] bg-[#e8f5e9] text-[#1b5e20]'
+            ? isCorrect(question, answer ?? '')
+              ? 'border-[#2e7d32] bg-[#e8f5e9] text-[#1b5e20]'
+              : 'border-[#c62828] bg-[#fdecea] text-[#b71c1c]'
             : 'border-[#6d7380] bg-white text-[#1c1c1e] focus:border-[#3b4ed8] focus:ring-2 focus:ring-[#3b4ed8]/20'
         }`}
       />
@@ -323,6 +326,7 @@ export default function QuestionView({
             />
           )}
           {question.imageAsset && <DiagramPlaceholder image={question.imageAsset} />}
+          {question.diagram && <DiagramPlaceholder diagram={question.diagram} />}
           {question.table && <TableFigure table={question.table} />}
           {question.passage && (
             <RichText
@@ -353,6 +357,7 @@ export default function QuestionView({
         <div className="flex-1 px-8 py-8 md:overflow-y-auto">
           {header}
           {question.imageAsset && <DiagramPlaceholder image={question.imageAsset} />}
+          {question.diagram && <DiagramPlaceholder diagram={question.diagram} />}
           {question.table && <TableFigure table={question.table} />}
           {promptBlock}
           {answerBlock}

@@ -96,3 +96,158 @@
     transform: translateY(-10px) rotate(var(--bb-rot, 0deg));
   }
 }
+
+/* ============ CRAMDUCK HUB DESIGN LANGUAGE — breakdown screen ============
+   Mirrors the dashboard (cramduck-mockup/index.html): paper/sheet surfaces,
+   1.5px ink borders, hard offset shadows, washi tape, Space Mono uppercase
+   micro-labels, Instrument Serif display type. data-mode syncs with the
+   hub's theme (localStorage `cramduck_mode`). */
+.cdk {
+  --paper: #f7f2e6; --sheet: #fffdf4; --ink: #28231a; --muted: #8d8371;
+  --line: #ddd3bd; --accent: #2979ff; --right: #58cc02; --wrong: #ff4b4b;
+  --skip: #d9a400; --grain-op: .07; --rule: rgba(141, 131, 113, .16);
+  --shadow: #28231a; --tape: rgba(238, 228, 196, .78); --note: #fff0a3;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Sora', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  transition: background .5s, color .5s;
+}
+.cdk[data-mode='dark'] {
+  --paper: #1d1915; --sheet: #29241e; --ink: #f1eadd; --muted: #9a8f7c;
+  --line: #453e33; --accent: #5c9dff; --right: #7bd94a; --wrong: #ff6b6b;
+  --skip: #ffc94d; --grain-op: .1; --rule: rgba(241, 234, 221, .09);
+  --shadow: #000; --tape: rgba(241, 234, 221, .16); --note: rgba(255, 255, 255, .05);
+}
+.cdk[data-mode='blueprint'] {
+  --paper: #123054; --sheet: #163a66; --ink: #d5e8f8; --muted: #84abc9;
+  --line: rgba(111, 198, 255, .4); --accent: #6fc6ff; --right: #4ade80;
+  --wrong: #ff7a7a; --skip: #ffd166; --grain-op: .05; --rule: rgba(111, 198, 255, .12);
+  --shadow: #0a1f38; --tape: rgba(111, 198, 255, .22); --note: rgba(111, 198, 255, .15);
+}
+.cdk::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 5;
+  opacity: var(--grain-op);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.cdk .cdk-mono { font-family: 'Space Mono', monospace; }
+.cdk-wrap { max-width: 880px; margin: 0 auto; padding: 44px 20px 96px; position: relative; z-index: 2; }
+.cdk-eyebrow {
+  font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--muted);
+}
+.cdk-eyebrow b { color: var(--accent); }
+.cdk h1 {
+  font-family: 'Instrument Serif', serif; font-weight: 400;
+  font-size: clamp(34px, 4.4vw, 52px); letter-spacing: -.02em; line-height: 1.05;
+  margin-top: 8px;
+}
+.cdk h1 em { font-style: italic; }
+.cdk-panel {
+  position: relative; margin-top: 30px; border: 1.5px solid var(--ink);
+  border-radius: 3px; background: var(--sheet); box-shadow: 5px 5px 0 var(--shadow);
+  transition: background .5s;
+}
+.cdk-panel::before {
+  content: ''; position: absolute; top: -9px; left: 30px; width: 66px; height: 19px;
+  background: var(--tape); transform: rotate(-2.5deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+  clip-path: polygon(0 18%, 5% 0, 95% 0, 100% 18%, 100% 82%, 95% 100%, 5% 100%, 0 82%);
+  z-index: 3;
+}
+.cdk-ph {
+  padding: 14px 20px; border-bottom: 1.5px dashed var(--line);
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px 16px; flex-wrap: wrap;
+}
+.cdk-ph .t {
+  font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--muted);
+}
+.cdk-ph .t b { color: var(--accent); }
+.cdk-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+.cdk-chip {
+  font-family: 'Space Mono', monospace; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; border: 1.5px solid var(--line);
+  border-radius: 2px; padding: 4px 8px; color: var(--muted); white-space: nowrap;
+}
+.cdk-chip.ok { color: var(--right); border-color: color-mix(in srgb, var(--right) 55%, var(--line)); }
+.cdk-chip.no { color: var(--wrong); border-color: color-mix(in srgb, var(--wrong) 55%, var(--line)); }
+.cdk-chip.sk { color: var(--skip); border-color: color-mix(in srgb, var(--skip) 55%, var(--line)); }
+.cdk-row {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 20px;
+  background: transparent; border: none; border-bottom: 1.5px dashed var(--line);
+  cursor: pointer; text-align: left; font: inherit; color: inherit; transition: background .15s;
+}
+.cdk-row:last-child { border-bottom: none; }
+.cdk-row:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.cdk-row.ok { background: color-mix(in srgb, var(--right) 9%, transparent); }
+.cdk-row.ok:hover { background: color-mix(in srgb, var(--right) 15%, transparent); }
+.cdk-row.no { background: color-mix(in srgb, var(--wrong) 9%, transparent); }
+.cdk-row.no:hover { background: color-mix(in srgb, var(--wrong) 15%, transparent); }
+.cdk-row.sk { background: color-mix(in srgb, var(--skip) 12%, transparent); }
+.cdk-row.sk:hover { background: color-mix(in srgb, var(--skip) 19%, transparent); }
+.cdk-dot { width: 10px; height: 10px; flex: none; border: 1.5px solid var(--ink); }
+.cdk-dot.ok { background: var(--right); }
+.cdk-dot.no { background: var(--wrong); }
+.cdk-dot.sk { background: var(--skip); }
+.cdk-qid { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+.cdk-time {
+  margin-left: auto; font-family: 'Space Mono', monospace; font-size: 11.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.cdk-tag {
+  font-family: 'Space Mono', monospace; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; width: 62px; text-align: right; flex: none;
+}
+.cdk-tag.ok { color: var(--right); }
+.cdk-tag.no { color: var(--wrong); }
+.cdk-tag.sk { color: var(--skip); }
+.cdk-caret { color: var(--muted); font-size: 11px; flex: none; }
+.cdk-open {
+  border-bottom: 1.5px dashed var(--line); padding: 20px;
+  background: repeating-linear-gradient(0deg, transparent 0 27px, var(--rule) 27px 28px);
+}
+.cdk-open:last-child { border-bottom: none; }
+.cdk-passage {
+  margin-bottom: 14px; max-height: 230px; overflow: auto; border: 1.5px solid var(--line);
+  border-radius: 3px; background: color-mix(in srgb, var(--sheet) 70%, transparent); padding: 12px 16px;
+}
+.cdk-opts { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.cdk-opt {
+  border: 1.5px solid var(--line); border-radius: 3px; padding: 8px 12px; font-size: 14px;
+  background: color-mix(in srgb, var(--sheet) 60%, transparent);
+}
+.cdk-opt.ok { border-color: var(--right); background: color-mix(in srgb, var(--right) 13%, transparent); font-weight: 600; }
+.cdk-opt.no { border-color: var(--wrong); background: color-mix(in srgb, var(--wrong) 11%, transparent); }
+.cdk-opt-tag {
+  margin-left: 8px; font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+}
+.cdk-opt.ok .cdk-opt-tag { color: var(--right); }
+.cdk-opt.no .cdk-opt-tag { color: var(--wrong); }
+.cdk-meta { margin-top: 12px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .06em; color: var(--muted); }
+.cdk-meta b { color: var(--ink); }
+.cdk-meta .ok { color: var(--right); }
+.cdk-meta .no { color: var(--wrong); }
+.cdk-why {
+  margin-top: 16px; border: 1.5px dashed var(--line); border-radius: 3px;
+  background: var(--note); padding: 13px 16px;
+}
+.cdk-why .t {
+  font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+.cdk-btn {
+  font-family: 'Sora', sans-serif; font-weight: 700; font-size: 12px; padding: 9px 16px;
+  border-radius: 3px; cursor: pointer; border: 2px solid var(--ink); background: transparent;
+  color: var(--ink); box-shadow: 3px 3px 0 var(--ink); transition: all .12s;
+}
+.cdk-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--accent); }
+.cdk-btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: 3px 3px 0 var(--muted); }
+.cdk-note-card {
+  max-width: 480px; margin: 0 auto; text-align: center; border: 1.5px solid var(--ink);
+  border-radius: 3px; background: var(--sheet); box-shadow: 5px 5px 0 var(--shadow); padding: 28px 26px;
+  font-size: 14px; line-height: 1.6; color: var(--muted);
+}
