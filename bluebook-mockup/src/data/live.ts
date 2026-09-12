@@ -389,6 +389,51 @@ export async function postEvents(events: StudentEventInput[]): Promise<void> {
   await supabase.from('student_events').insert(body)
 }
 
+export interface SessionEvent {
+  question_id: string
+  correct: boolean
+  mode: 'exam' | 'practice' | 'diagnostic'
+  time_ms: number
+  choice_id: string | null
+  grid_in_answer: string | null
+  occurred_at: string
+}
+
+/** Events for one past session (the hub's simulator tab boxes) — the window
+ *  is [start, end] inclusive, ordered by insertion. RLS scopes the read to
+ *  the signed-in student. */
+export async function fetchSessionEvents(startIso: string, endIso: string): Promise<SessionEvent[]> {
+  const { data } = await supabase
+    .from('student_events')
+    .select('question_id,correct,mode,time_ms,choice_id,grid_in_answer,occurred_at')
+    .gte('occurred_at', startIso)
+    .lte('occurred_at', endIso)
+    .order('id', { ascending: true })
+  return (data ?? []) as SessionEvent[]
+}
+
+/** Practice-test display ids (A2-RW2-Q20 / B3-M1-Q6) for a set of bank
+ *  question ids. Questions outside any pre-built test are simply absent. */
+export async function fetchDisplayIds(ids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  if (ids.length === 0) return out
+  const enc = ids.map((i) => encodeURIComponent(i)).join(',')
+  const rows = (await fetchAllPages(
+    `${SUPABASE_URL}/rest/v1/practice_test_questions?source_id=in.(${enc})&select=source_id,section,module,position,practice_tests!inner(label)`,
+  )) as Array<{
+    source_id: string
+    section: 'reading-writing' | 'math'
+    module: 1 | 2
+    position: number
+    practice_tests: { label: string }
+  }>
+  for (const r of rows) {
+    const code = r.section === 'reading-writing' ? `RW${r.module}` : `M${r.module}`
+    out.set(r.source_id, `${r.practice_tests.label}-${code}-Q${r.position}`)
+  }
+  return out
+}
+
 export type ZenSubject = 'all' | 'math' | 'rw'
 export type ZenDifficulty = 'chill' | 'standard' | 'brutal'
 

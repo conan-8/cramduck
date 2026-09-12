@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { isCorrect } from '../data/live'
+import { fetchBank, fetchDisplayIds, fetchSessionEvents, isCorrect } from '../data/live'
 import RichText from './RichText'
 import { TableFigure } from './QuestionView'
 import { consumeBreakdown, readBreakdown, type BreakdownPayload, type BreakdownQuestion } from '../lib/breakdown'
@@ -13,10 +13,45 @@ import { consumeBreakdown, readBreakdown, type BreakdownPayload, type BreakdownQ
  * with your answer, the correct answer, the rationale, and an
  * "Ask CramduckAI" button (placeholder — wired up later).
  *
- * Data handoff: ResultsScreen writes the module payload to localStorage
- * under a one-time key and opens `#/breakdown?key=...`; this screen reads
- * the payload and removes the key (see lib/breakdown.ts).
+ * Two entry points:
+ *  - `#/breakdown?key=...` — one-time localStorage handoff written by the
+ *    results screen of a just-finished test (see lib/breakdown.ts).
+ *  - `#/breakdown?start=...&end=...` — PAST SESSION mode, opened from the
+ *    hub's simulator tab ("Breakdown" button on each past-session box).
+ *    Rebuilds the run from student_events + the live question bank, so it
+ *    works for any recorded session, not just the current one.
  */
+
+const SESSION_MODE_TITLE: Record<string, string> = {
+  exam: 'Timed run',
+  practice: 'Zen mode',
+  diagnostic: 'Diagnostic run',
+}
+
+/** Build a breakdown payload from the recorded events of one past session. */
+async function buildSessionPayload(start: string, end: string, mode: string | null, label: string | null): Promise<BreakdownPayload> {
+  const [events, bank] = await Promise.all([fetchSessionEvents(start, end), fetchBank()])
+  const byId = new Map([...bank.generated, ...bank.harvested].map((q) => [q.id, q]))
+  const displayIds = await fetchDisplayIds([...new Set(events.map((e) => e.question_id))])
+  const questions: BreakdownQuestion[] = []
+  for (const e of events) {
+    const q = byId.get(e.question_id)
+    if (!q) continue
+    questions.push({
+      displayId: displayIds.get(e.question_id) ?? `Q${questions.length + 1}`,
+      question: q,
+      answer: (e.choice_id ?? e.grid_in_answer ?? '').trim() || undefined,
+      timeMs: e.time_ms,
+    })
+  }
+  const when = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return {
+    testLabel: label || undefined,
+    moduleLabel: SESSION_MODE_TITLE[mode ?? ''] ?? 'Session',
+    title: when,
+    questions,
+  }
+}
 
 function statusOf(q: BreakdownQuestion): 'correct' | 'skipped' | 'wrong' {
   const a = q.answer
@@ -38,6 +73,16 @@ const TAG_STYLE: Record<string, string> = {
   correct: 'text-[#1b5e20]',
   skipped: 'text-[#8d6e00]',
   wrong: 'text-[#b71c1c]',
+}
+
+/** Compact per-question dwell time: "45s", "1m 23s" — null when untracked. */
+function fmtTime(ms?: number): string | null {
+  if (ms === undefined || ms <= 0) return null
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const rem = s % 60
+  return rem ? `${m}m ${rem}s` : `${m}m`
 }
 
 function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: 'correct' | 'skipped' | 'wrong' }) {
@@ -107,6 +152,11 @@ function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: 'correc
           {optionText(answer) ? ` — ${optionText(answer)}` : ''}
         </p>
       )}
+      {fmtTime(q.timeMs) && (
+        <p className="mt-1.5 text-[12px] text-[#8a8f99]">
+          Time on question: <b className="font-mono tabular-nums">{fmtTime(q.timeMs)}</b>
+        </p>
+      )}
       {question.rationale && (
         <div className="mt-3 rounded-lg bg-[#f4f6fa] px-4 py-3">
           <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#8a8f99]">Why</p>
@@ -134,20 +184,48 @@ function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: 'correc
 export default function BreakdownScreen() {
   const [searchParams] = useSearchParams()
   const key = searchParams.get('key')
+  const start = searchParams.get('start')
+  const end = searchParams.get('end')
   // read once during the initial render (pure — see lib/breakdown), then
   // consume the storage key after mount so a reload shows the expired note
-  const [payload] = useState<BreakdownPayload | null>(() => readBreakdown(key))
+  const [keyedPayload] = useState<BreakdownPayload | null>(() => readBreakdown(key))
+  const [sessionPayload, setSessionPayload] = useState<BreakdownPayload | null>(null)
+  const [sessionError, setSessionError] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
     consumeBreakdown(key)
   }, [key])
 
+  // Past-session mode: rebuild the run from student_events + the bank.
+  useEffect(() => {
+    if (key || !start || !end) return
+    let cancelled = false
+    buildSessionPayload(start, end, searchParams.get('mode'), searchParams.get('label'))
+      .then((p) => {
+        if (!cancelled) {
+          setSessionPayload(p)
+          setSessionError(false)
+        }
+      })
+      .catch(() => !cancelled && setSessionError(true))
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, start, end])
+
+  const payload = keyedPayload ?? sessionPayload
+
   if (!payload) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f4f5f7] p-6">
         <p className="max-w-sm text-center text-sm text-[#5b616e]">
-          This breakdown link has expired — open it again from the results screen of a finished test.
+          {start && end
+            ? sessionError
+              ? 'Could not load this session’s breakdown — make sure you’re signed in with the account that ran it.'
+              : 'Loading breakdown…'
+            : 'This breakdown link has expired — open it again from the results screen of a finished test.'}
         </p>
       </div>
     )
@@ -184,6 +262,7 @@ export default function BreakdownScreen() {
           {payload.questions.map((q) => {
             const status = statusOf(q)
             const isOpen = expanded === q.displayId
+            const time = fmtTime(q.timeMs)
             return (
               <div key={q.displayId} className="border-b border-[#e4e6ea] last:border-b-0">
                 <button
@@ -194,7 +273,13 @@ export default function BreakdownScreen() {
                 >
                   <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOT_STYLE[status]}`} />
                   <span className="font-mono text-[14px] font-bold tracking-wide">{q.displayId}</span>
-                  <span className={`ml-auto text-[11px] font-bold uppercase tracking-[1.2px] ${TAG_STYLE[status]}`}>
+                  <span
+                    className={`ml-auto font-mono text-[12px] tabular-nums ${time ? 'text-[#5b616e]' : 'invisible'}`}
+                    title={time ? 'Time spent on this question' : undefined}
+                  >
+                    {time ?? '—'}
+                  </span>
+                  <span className={`w-16 text-right text-[11px] font-bold uppercase tracking-[1.2px] ${TAG_STYLE[status]}`}>
                     {status}
                   </span>
                   <span aria-hidden="true" className="text-[12px] text-[#8a8f99]">

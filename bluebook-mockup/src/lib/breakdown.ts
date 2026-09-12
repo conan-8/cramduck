@@ -10,6 +10,9 @@ export interface BreakdownQuestion {
   displayId: string
   question: Question
   answer: string | undefined
+  /** Per-question dwell time in ms — from the live run's dwell tracking or,
+   *  for past sessions, student_events.time_ms. */
+  timeMs?: number
 }
 
 export interface BreakdownPayload {
@@ -17,7 +20,9 @@ export interface BreakdownPayload {
   moduleLabel: string
   title: string
   tier?: 'mixed' | 'easy' | 'hard'
-  minutes: number
+  /** Module clock — only set on the results-screen handoff, not on
+   *  past-session payloads rebuilt from student_events. */
+  minutes?: number
   questions: BreakdownQuestion[]
 }
 

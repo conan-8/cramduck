@@ -388,6 +388,7 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .simrec .sr-score .acc{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
 .simrec .sr-score .acc span{color:var(--muted);font-weight:400}
 .simrec .sr-score.none .sat{color:var(--muted)}
+.simrec .sr-bd{flex:none;white-space:nowrap}
 
 /* ============ MISTAKES ============ */
 .mtabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
@@ -1318,8 +1319,17 @@ async function loadSim(){
       '<div class="sr-meta">'+sc.scope+' \u00b7 '+st.a+' QUESTION'+(st.a===1?'':'S')+' \u00b7 '+simDur(st.time)+'</div>'+
       '<div class="mods">'+chips+'</div></div>'+
       '<div class="sr-score"><span class="sat">'+sc.score+'<small>/'+sc.max+'</small></span>'+
-      '<span class="acc">'+st.acc+'% <span>\u00b7 '+st.c+'/'+st.a+' CORRECT</span></span></div></div>';
+      '<span class="acc">'+st.acc+'% <span>\u00b7 '+st.c+'/'+st.a+' CORRECT</span></span></div>'+
+      '<button class="btn sec sm sr-bd" data-start="'+new Date(s.start).toISOString()+'" data-end="'+new Date(s.end).toISOString()+'" data-mode="'+esc(s.mode)+'"'+(tl?' data-label="'+esc(tl)+'"':'')+'>Breakdown &rarr;</button></div>';
   }).reverse().join('');
+  /* each box's breakdown button opens the simulator's breakdown tab for
+     that session, rebuilt from student_events (same-origin localStorage
+     handoff is not needed — the URL carries the session window) */
+  recs.querySelectorAll('.sr-bd').forEach(b=>b.addEventListener('click',()=>{
+    const p=new URLSearchParams({start:b.dataset.start,end:b.dataset.end,mode:b.dataset.mode});
+    if(b.dataset.label)p.set('label',b.dataset.label);
+    window.open('bluebook-practice-test.html#/breakdown?'+p.toString(),'_blank');
+  }));
   recs.dataset.loaded='1';
 }
 

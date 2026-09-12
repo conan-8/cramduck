@@ -175,6 +175,12 @@ export default function Home() {
   const startTest = (source: SourceKind, excludeBluebook: boolean, pickedLabel?: string) => {
     // Fresh test: the graphing calculator must not carry over any previous work.
     clearCalcState()
+    // Fresh timing: dwell times and post guards must not carry over either,
+    // or repeat question ids would accumulate stale time from the last run.
+    dwellRef.current = {}
+    lastQRef.current = null
+    switchRef.current = 0
+    postedRef.current = new Set()
     setPendingStart({ source, excludeBluebook })
     Promise.resolve(bank ?? fetchBank())
       .then(async (b) => {
@@ -316,5 +322,13 @@ export default function Home() {
     return <BreakScreen onResume={() => beginModule(BREAK_BEFORE_MODULE)} />
   }
 
-  return <ResultsScreen test={test} answers={answers} testLabel={practice?.label} onExit={exitToStart} />
+  return (
+    <ResultsScreen
+      test={test}
+      answers={answers}
+      testLabel={practice?.label}
+      times={{ ...dwellRef.current }}
+      onExit={exitToStart}
+    />
+  )
 }

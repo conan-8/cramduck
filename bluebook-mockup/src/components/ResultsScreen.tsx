@@ -11,6 +11,8 @@ interface ResultsScreenProps {
   answers: Record<string, string>
   /** Pre-built practice test label (A2, B3, …) — absent on random runs. */
   testLabel?: string
+  /** Per-question dwell times in ms, keyed by question id (Home's tracking). */
+  times?: Record<string, number>
   onExit: () => void
 }
 
@@ -76,7 +78,7 @@ function QuestionReview({ q, number, answer }: { q: Question; number: number; an
   )
 }
 
-export default function ResultsScreen({ test, answers, testLabel, onExit }: ResultsScreenProps) {
+export default function ResultsScreen({ test, answers, testLabel, times, onExit }: ResultsScreenProps) {
   const confetti = useMemo(
     () =>
       Array.from({ length: 40 }, (_, i) => ({
@@ -193,6 +195,7 @@ export default function ResultsScreen({ test, answers, testLabel, onExit }: Resu
                   displayId: q.displayId ?? `Q${i + 1}`,
                   question: q,
                   answer: answers[q.id],
+                  timeMs: times?.[q.id],
                 })),
               })
             return (
