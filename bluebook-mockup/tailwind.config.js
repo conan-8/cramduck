@@ -72,11 +72,16 @@ module.exports = {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
+        "overtime-flash": {
+          "0%,100%": { color: "#c62828" },
+          "50%": { color: "#1c1c1e" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
+        "overtime-flash": "overtime-flash 1s ease-in-out infinite",
       },
     },
   },

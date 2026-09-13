@@ -83,7 +83,7 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
     <section
       ref={panelRef}
       role="dialog"
-      aria-label="Desmos graphing calculator"
+      aria-label="Graphing calculator"
       className={`absolute left-0 top-0 z-30 h-full flex-col border-r border-[#c9cede] bg-white shadow-[0_18px_50px_rgba(16,31,60,0.28)] ${
         open ? 'flex' : 'hidden'
       } ${width === null ? 'w-1/2' : ''}`}
@@ -91,7 +91,7 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
     >
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-[#e6e8ec] bg-[#f7f8fa] px-3">
         <span className="text-[12px] font-bold uppercase tracking-wide text-[#3c4048]">
-          Desmos Graphing Calculator
+          Graphing Calculator
         </span>
         <button
           onClick={onClose}
@@ -104,7 +104,7 @@ export default function DesmosCalculatorPanel({ moduleId, open, onClose }: Desmo
 
       {loadError ? (
         <div className="flex flex-1 items-center justify-center px-6 text-center text-[14px] text-[#5b616e]">
-          Could not load the Desmos calculator. Check your internet connection and try reloading.
+          Could not load the graphing calculator. Check your internet connection and try reloading.
         </div>
       ) : (
         <div ref={containerRef} className={`min-h-0 flex-1 ${resizing ? 'pointer-events-none' : ''}`} />

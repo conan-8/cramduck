@@ -338,24 +338,86 @@ export function selectQuestions(
   return onlyVerified(items.filter((q) => q.kind === source))
 }
 
+/** Exact rational (numerator/denominator as BigInt) for SPR comparison. */
+interface Rat {
+  n: bigint
+  d: bigint
+}
+
+/** Parse an SPR entry ("7/2", "-1/3", ".6666", "3.50") into an exact rational.
+ *  Fractions may carry decimal parts on either side; denominator 0 → null. */
+function parseRat(raw: string): Rat | null {
+  let t = raw.trim().replace(/−/g, '-')
+  if (!t) return null
+  let neg = false
+  if (t[0] === '-' || t[0] === '+') {
+    neg = t[0] === '-'
+    t = t.slice(1)
+  }
+  const dec = (s: string): Rat | null => {
+    if (!/^\d*\.?\d*$/.test(s) || s === '' || s === '.') return null
+    const [i, f = ''] = s.split('.')
+    const digits = (i || '0') + f
+    return { n: BigInt(digits), d: 10n ** BigInt(f.length) }
+  }
+  let r: Rat | null
+  if (t.includes('/')) {
+    const [a, b] = t.split('/')
+    if (a === undefined || b === undefined || a === '' || b === '') return null
+    const ra = dec(a)
+    const rb = dec(b)
+    if (!ra || !rb || rb.n === 0n) return null
+    r = { n: ra.n * rb.d, d: ra.d * rb.n }
+  } else {
+    r = dec(t)
+  }
+  if (!r) return null
+  if (neg) r.n = -r.n
+  return r
+}
+
+const ratEq = (a: Rat, b: Rat): boolean => a.n * b.d === b.n * a.d
+
+/** Truncate |r| at k decimal places (towards zero), keeping the sign. */
+function truncAt(r: Rat, k: number): Rat {
+  const p = 10n ** BigInt(k)
+  const mag = ((r.n < 0n ? -r.n : r.n) * p) / r.d
+  return { n: r.n < 0n ? -mag : mag, d: p }
+}
+
+/** Round |r| half away from zero at k decimal places, keeping the sign. */
+function roundAt(r: Rat, k: number): Rat {
+  const p = 10n ** BigInt(k)
+  const mag = (2n * (r.n < 0n ? -r.n : r.n) * p + r.d) / (2n * r.d)
+  return { n: r.n < 0n ? -mag : mag, d: p }
+}
+
+/** Decimal places of a decimal-form entry ("3.50" → 2); null for integers
+ *  and fraction forms. */
+function decPlaces(raw: string): number | null {
+  const t = raw.trim().replace(/−/g, '-')
+  if (!/^-?(?:\d+\.\d*|\.\d+)$/.test(t)) return null
+  return t.split('.')[1]?.length ?? 0
+}
+
 /** Correctness check shared by the sim (exam scoring) and zen (check-as-you-go).
- *  MCQ compares option letters; grid-in compares numeric value with fraction
- *  and tolerance handling. */
+ *  MCQ compares option letters; grid-in follows the student-produced response
+ *  directions: equivalent fractions and exact decimals score, and a decimal
+ *  truncated or rounded at the third/fourth digit scores (e.g. 2/3 accepts
+ *  .6666, .6667, 0.666, 0.667 but not 0.66 or 0.67). */
 export function isCorrect(question: { options?: string[]; correct: string }, value: string): boolean {
   if (question.options) return value === question.correct
-  const norm = (s: string): number => {
-    const t = s.trim()
-    if (!t) return NaN
-    if (t.includes('/')) {
-      const [a, b] = t.split('/')
-      return Number(a) / Number(b)
-    }
-    return Number(t)
+  const a = parseRat(value)
+  const b = parseRat(question.correct)
+  if (!a || !b) return value.trim() === question.correct.trim()
+  if (ratEq(a, b)) return true
+  const enteredDecimal = decPlaces(value) !== null
+  const correctDecimal = decPlaces(question.correct) !== null
+  for (const k of [3, 4]) {
+    if (enteredDecimal && (ratEq(a, truncAt(b, k)) || ratEq(a, roundAt(b, k)))) return true
+    if (!enteredDecimal && correctDecimal && (ratEq(b, truncAt(a, k)) || ratEq(b, roundAt(a, k)))) return true
   }
-  const a = norm(value)
-  const b = norm(question.correct)
-  if (Number.isNaN(a) || Number.isNaN(b)) return value.trim() === question.correct.trim()
-  return Math.abs(a - b) < 1e-6
+  return false
 }
 
 export interface StudentEventInput {

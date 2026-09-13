@@ -4,13 +4,14 @@ import type { ExamModule, Question, TableSpec } from '../types/exam'
 import { isCorrect } from '../data/live'
 import AnswerOptions from './AnswerOptions'
 import DiagramPlaceholder from './DiagramPlaceholder'
+import { useHighlighter } from './HighlightPopup'
 import RichText from './RichText'
 
 /** Table stimulus (two-way frequency tables, data tables). Exported for the
  *  read-only breakdown view. */
 export function TableFigure({ table }: { table: TableSpec }) {
   return (
-    <figure className="mx-auto my-6 w-full max-w-[520px] overflow-hidden rounded-lg border border-[#b9bec9] bg-white px-5 py-4">
+    <figure className="mx-auto my-7 w-full max-w-[520px] overflow-hidden rounded-lg border border-[#b9bec9] bg-white px-5 py-4">
       {table.caption && (
         <figcaption className="mb-2 text-center font-exam-serif text-sm text-[#3c4048]">{table.caption}</figcaption>
       )}
@@ -234,6 +235,8 @@ export default function QuestionView({
   const [strikesVisible, setStrikesVisible] = useState(true)
   const [splitPct, setSplitPct] = useState(50)
   const splitRef = useRef<HTMLDivElement>(null)
+  const highlightRootRef = useRef<HTMLDivElement>(null)
+  const highlightPopup = useHighlighter(highlightRootRef, question.id)
 
   const startDrag = (e: React.PointerEvent) => {
     e.preventDefault()
@@ -288,7 +291,10 @@ export default function QuestionView({
       <input
         id={`gridin-${question.id}`}
         value={answer ?? ''}
-        onChange={(e) => onAnswer(question.id, e.target.value.replace(/[^0-9.\-/]/g, '').slice(0, 6))}
+        onChange={(e) => {
+          const clean = e.target.value.replace(/[^0-9.\-/]/g, '')
+          onAnswer(question.id, clean.startsWith('-') ? clean.slice(0, 6) : clean.slice(0, 5))
+        }}
         inputMode="text"
         autoComplete="off"
         readOnly={reveal}
@@ -314,7 +320,10 @@ export default function QuestionView({
   if (module.split) {
     return (
       <div
-        ref={splitRef}
+        ref={(el) => {
+          splitRef.current = el
+          highlightRootRef.current = el
+        }}
         className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden"
         style={{ '--split-pct': `${splitPct}%` } as React.CSSProperties}
       >
@@ -342,6 +351,7 @@ export default function QuestionView({
           {promptBlock}
           {answerBlock}
         </div>
+        {highlightPopup}
       </div>
     )
   }
@@ -349,7 +359,7 @@ export default function QuestionView({
   // Math student-produced response: directions left, question right.
   if (!question.options) {
     return (
-      <div className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      <div ref={highlightRootRef} className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         <div className="flex-1 md:overflow-y-auto">
           <SprDirectionsPane />
         </div>
@@ -362,13 +372,14 @@ export default function QuestionView({
           {promptBlock}
           {answerBlock}
         </div>
+        {highlightPopup}
       </div>
     )
   }
 
   // Math multiple choice: single column.
   return (
-    <div className="h-full overflow-y-auto">
+    <div ref={highlightRootRef} className="h-full overflow-y-auto">
       <div className="mx-auto max-w-[780px] px-6 py-8">
         {header}
         {question.imageAsset && <DiagramPlaceholder image={question.imageAsset} />}
@@ -377,6 +388,7 @@ export default function QuestionView({
         {promptBlock}
         {answerBlock}
       </div>
+      {highlightPopup}
     </div>
   )
 }

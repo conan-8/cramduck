@@ -73,6 +73,7 @@ export default function ZenScreen() {
   const postedRef = useRef<Set<string>>(new Set())
 
   const [secondsLeft, setSecondsLeft] = useState(0)
+  const [secondsUp, setSecondsUp] = useState(0)
   const [calcOpen, setCalcOpen] = useState(false)
   const lastIdRef = useRef<string | null>(null)
   const shownAtRef = useRef<number>(0)
@@ -102,6 +103,7 @@ export default function ZenScreen() {
     lastIdRef.current = null
     shownAtRef.current = Date.now()
     setSecondsLeft(timer)
+    setSecondsUp(0)
     setPhase('run')
   }
 
@@ -171,10 +173,17 @@ export default function ZenScreen() {
     setPhase('report')
   }
 
-  // Per-question countdown (pace only). Resets whenever the question changes.
+  // Per-question timer (pace only): counts down when a limit is set, counts up
+  // otherwise. Resets whenever the question changes.
   useEffect(() => {
-    if (phase !== 'run' || config.timer === 0 || revealed) return
-    const t = window.setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000)
+    if (phase !== 'run' || revealed) return
+    const t = window.setInterval(
+      () =>
+        config.timer === 0
+          ? setSecondsUp((s) => s + 1)
+          : setSecondsLeft((s) => Math.max(0, s - 1)),
+      1000,
+    )
     return () => window.clearInterval(t)
   }, [phase, config.timer, revealed, index])
 
@@ -208,6 +217,7 @@ export default function ZenScreen() {
     lastIdRef.current = question?.id ?? null
     shownAtRef.current = Date.now()
     setSecondsLeft(config.timer)
+    setSecondsUp(0)
     let pool = queue
     let ni = index + 1
     if (ni >= queue.length) {
@@ -240,6 +250,7 @@ export default function ZenScreen() {
     setLastRight(wasChecked ? isCorrect(target, answers[target.id] ?? '') : null)
     shownAtRef.current = Date.now()
     setSecondsLeft(config.timer)
+    setSecondsUp(0)
     setIndex(index - 1)
   }
 
@@ -359,13 +370,19 @@ export default function ZenScreen() {
           {config.timer > 0 ? (
             <span
               className={`text-[26px] font-semibold leading-none tabular-nums ${
-                secondsLeft === 0 ? 'text-[#c62828]' : 'text-[#1c1c1e]'
+                secondsLeft === 0
+                  ? revealed
+                    ? 'text-[#c62828]'
+                    : 'animate-overtime-flash'
+                  : 'text-[#1c1c1e]'
               }`}
             >
               {formatTime(secondsLeft)}
             </span>
           ) : (
-            <span className="text-[26px] font-semibold leading-none text-[#1c1c1e]">∞</span>
+            <span className="text-[26px] font-semibold leading-none tabular-nums text-[#1c1c1e]">
+              {formatTime(secondsUp)}
+            </span>
           )}
           <span className="mt-1 text-[12px] font-semibold tabular-nums text-[#5b616e]">
             run {run} ✓ · best {bestRun} · {acc}%

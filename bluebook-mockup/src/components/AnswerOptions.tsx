@@ -72,6 +72,9 @@ export default function AnswerOptions({
               aria-checked={isSelected}
               onClick={() => {
                 if (reveal || isCrossed) return
+                // Drag-selecting text (for highlighting) shouldn't pick the option.
+                const sel = window.getSelection()
+                if (sel && !sel.isCollapsed) return
                 onSelect(letter)
               }}
               className={`relative flex flex-1 items-center gap-4 rounded-xl border px-5 py-3 text-left transition-colors ${boxCls}`}

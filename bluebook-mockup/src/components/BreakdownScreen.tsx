@@ -98,13 +98,13 @@ function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: Status 
           <RichText text={question.passage} className="block font-exam-serif text-[14px] leading-[1.7]" />
         </div>
       )}
-      <RichText text={question.prompt} className="block font-exam-serif text-[15px] leading-[1.7]" />
+      <RichText text={question.prompt} className="block font-exam-serif text-[15px] leading-[28px]" />
       {question.table && <TableFigure table={question.table} />}
       {question.imageAsset && (
         <img
           src={question.imageAsset}
           alt=""
-          className="mx-auto my-3 max-h-[320px] rounded-[3px] border-[1.5px] border-[var(--line)] bg-white"
+          className="mx-auto my-7 max-h-[320px] rounded-[3px] border-[1.5px] border-[var(--line)] bg-white"
         />
       )}
       {question.options && (
