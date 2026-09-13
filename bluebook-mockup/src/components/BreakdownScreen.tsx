@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { fetchBank, fetchDisplayIds, fetchSessionEvents, isCorrect } from '../data/live'
+import { buildQuestionContext } from '../lib/ask-ai'
+import AskAiSidebar from './AskAiSidebar'
 import RichText from './RichText'
 import { TableFigure } from './QuestionView'
 import { consumeBreakdown, readBreakdown, type BreakdownPayload, type BreakdownQuestion } from '../lib/breakdown'
@@ -12,7 +14,7 @@ import { consumeBreakdown, readBreakdown, type BreakdownPayload, type BreakdownQ
  * status fill (green = correct, amber = skipped, red = wrong) and the
  * per-question dwell time. Clicking a row expands the full question with
  * your answer, the correct answer, the rationale, and an "Ask CramduckAI"
- * button (placeholder — wired up later).
+ * button that opens the coach sidebar seeded with that question.
  *
  * Styled in the Cramduck hub's design language (see the `.cdk` block in
  * index.css): paper/sheet surfaces, hard shadows, washi tape, Space Mono
@@ -88,7 +90,7 @@ function hubMode(): string {
   }
 }
 
-function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: Status }) {
+function ExpandedQuestion({ q, status, onAsk }: { q: BreakdownQuestion; status: Status; onAsk: () => void }) {
   const { question, answer } = q
   const time = fmtTime(q.timeMs)
   return (
@@ -146,10 +148,9 @@ function ExpandedQuestion({ q, status }: { q: BreakdownQuestion; status: Status 
         </div>
       )}
       <div className="mt-5 flex items-center gap-3">
-        <button type="button" disabled title="Ask CramduckAI — coming soon" className="cdk-btn">
+        <button type="button" onClick={onAsk} className="cdk-btn">
           Ask CramduckAI
         </button>
-        <span className="cdk-eyebrow">coming soon</span>
       </div>
     </div>
   )
@@ -166,6 +167,8 @@ export default function BreakdownScreen() {
   const [sessionPayload, setSessionPayload] = useState<BreakdownPayload | null>(null)
   const [sessionError, setSessionError] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  /** Question the "Ask CramduckAI" sidebar is currently seeded with. */
+  const [askFor, setAskFor] = useState<BreakdownQuestion | null>(null)
   const [mode] = useState<string>(hubMode)
 
   useEffect(() => {
@@ -222,8 +225,10 @@ export default function BreakdownScreen() {
         ? 'routed to the harder Module 2'
         : ''
 
+  const askStatus = askFor ? statusOf(askFor) : null
+
   return (
-    <div className="cdk" data-mode={mode}>
+    <div className={`cdk${askFor ? ' ask-open' : ''}`} data-mode={mode}>
       <div className="cdk-wrap">
         <header>
           <p className="cdk-eyebrow">
@@ -272,12 +277,34 @@ export default function BreakdownScreen() {
                     {isOpen ? '▲' : '▼'}
                   </span>
                 </button>
-                {isOpen && <ExpandedQuestion q={q} status={status} />}
+                {isOpen && <ExpandedQuestion q={q} status={status} onAsk={() => setAskFor(q)} />}
               </div>
             )
           })}
         </section>
       </div>
+
+      <AskAiSidebar
+        variant="fixed"
+        open={!!askFor}
+        onClose={() => setAskFor(null)}
+        seedKey={askFor?.question.id ?? 'none'}
+        label={askFor?.displayId ?? ''}
+        context={
+          askFor
+            ? buildQuestionContext(
+                askFor.question,
+                askFor.answer,
+                askStatus === 'correct' ? true : askStatus === 'wrong' ? false : undefined,
+              )
+            : ''
+        }
+        chips={[
+          ...(askStatus === 'wrong' ? ['Why is my answer wrong?'] : []),
+          'Why is the correct answer right?',
+          'What trap does this question set?',
+        ]}
+      />
     </div>
   )
 }

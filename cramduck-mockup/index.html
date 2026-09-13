@@ -387,15 +387,15 @@ body[data-mode="blueprint"] .stat.rd{background:rgba(255,122,122,.18)}
 .simrec .sr-score{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
 .simrec .sr-score .sat{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-.02em;color:var(--accent)}
 .simrec .sr-score .sat small{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:0}
-.simrec .sr-score .acc{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.simrec .sr-score .acc{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
 .simrec .sr-score .acc span{color:var(--muted);font-weight:400}
 .simrec .sr-score.none .sat{color:var(--muted)}
 .simrec .sr-bd{flex:none;white-space:nowrap}
 
 /* ============ MISTAKES ============ */
 .mtabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-.mrow{display:flex;align-items:flex-start;gap:14px;min-height:56px;padding:0 6px;transition:background .15s,padding .15s}
-.mrow:hover{background:color-mix(in srgb,var(--accent) 5%,transparent);padding-left:12px}
+.mrow{display:flex;align-items:center;gap:14px;min-height:56px;padding:10px 12px;margin-bottom:10px;border:1.5px solid var(--line);border-radius:4px;background:var(--sheet);transition:background .15s,padding .15s,border-color .15s}
+.mrow:hover{background:color-mix(in srgb,var(--accent) 5%,var(--sheet));padding-left:16px;border-color:var(--ink)}
 .mrow .mq{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:28px}
 .mrow .mq small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:0;line-height:28px;font-family:'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
 .mtag{align-self:center;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:2px;padding:4px 8px;color:var(--muted);white-space:nowrap}
@@ -430,7 +430,7 @@ body[data-mode="dark"] #v-skills .panel .ph .t:first-child,body[data-mode="dark"
 .skcell{border:1.5px solid var(--line);border-radius:0;padding:6px 11px;cursor:pointer;height:56px;display:flex;flex-direction:column;justify-content:space-between;gap:0;transition:transform .15s,box-shadow .15s}
 .skcell:hover{transform:translateY(-2px);box-shadow:0 8px 16px -6px rgba(0,0,0,.3);border-color:var(--ink)}
 .skcell .nm{font-family:'Sora',sans-serif;font-weight:600;font-size:12px;line-height:1.2;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.skcell .pc{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)}
+.skcell .pc{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)}
 .skcell.m0{background:var(--sheet)}
 .skcell.m1{background:color-mix(in srgb,var(--wrong) 22%,var(--sheet))}
 .skcell.m2{background:color-mix(in srgb,var(--accent) 18%,var(--sheet))}
@@ -872,6 +872,13 @@ body:not([data-view="today"]) .mast{display:none}
             </div>
             <p class="mnote" style="max-width:440px">the timer only shows your pace &mdash; it never locks you out or advances for you</p>
 
+            <div class="zc-label" style="margin-top:28px">Question pool</div>
+            <div class="zen-ctl">
+              <button class="zp on" data-zc="fresh" data-v="0">Everything</button>
+              <button class="zp" data-zc="fresh" data-v="1">Skip questions I&rsquo;ve done</button>
+            </div>
+            <p class="mnote" style="max-width:440px">skip mode drops questions you&rsquo;ve already answered correctly &mdash; ones you got wrong stay in the stream</p>
+
             <div style="margin-top:28px;display:flex;gap:14px;flex-wrap:wrap">
               <button class="btn pri" id="zen-start">Start session &rarr;</button>
             </div>
@@ -1206,13 +1213,13 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 /* zen mode now lives in the simulator (bluebook-practice-test.html#/zen) —
    the zen tab carries the config and hands it over via query params */
-const ZC={subject:'all',difficulty:'standard',timer:'0'};
+const ZC={subject:'all',difficulty:'standard',timer:'0',fresh:'0'};
 document.querySelectorAll('[data-zc]').forEach(b=>b.addEventListener('click',()=>{
   ZC[b.dataset.zc]=b.dataset.v;
   document.querySelectorAll('[data-zc="'+b.dataset.zc+'"]').forEach(o=>o.classList.toggle('on',o===b));
 }));
 document.getElementById('zen-start').addEventListener('click',()=>{
-  window.open('bluebook-practice-test.html#/zen?subject='+encodeURIComponent(ZC.subject)+'&difficulty='+encodeURIComponent(ZC.difficulty)+'&timer='+encodeURIComponent(ZC.timer),'_blank');
+  window.open('bluebook-practice-test.html#/zen?subject='+encodeURIComponent(ZC.subject)+'&difficulty='+encodeURIComponent(ZC.difficulty)+'&timer='+encodeURIComponent(ZC.timer)+(ZC.fresh==='1'?'&fresh=1':''),'_blank');
 });
 
 /* simulator — run config picker + past session records */

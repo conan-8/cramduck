@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calculator, LogOut } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import type { BankQuestion, ZenDifficulty, ZenSubject } from '../data/live'
-import { fetchBank, isCorrect, postEvents, resolveDisplayId, selectBySkills, selectZen } from '../data/live'
+import { fetchBank, fetchSolvedIds, isCorrect, postEvents, resolveDisplayId, selectBySkills, selectZen } from '../data/live'
+import { buildQuestionContext } from '../lib/ask-ai'
+import AskAiSidebar from './AskAiSidebar'
 import DesmosCalculatorPanel from './DesmosCalculatorPanel'
 import QuestionView from './QuestionView'
 import RichText from './RichText'
@@ -14,6 +16,9 @@ interface ZenConfig {
   subject: ZenSubject
   difficulty: ZenDifficulty
   timer: TimerOpt
+  /** "Skip done questions": drop questions already answered correctly in a
+   *  past session. Wrong answers stay in the pool so they keep resurfacing. */
+  fresh: boolean
 }
 
 interface SessionEntry {
@@ -49,6 +54,7 @@ export default function ZenScreen() {
       subject: s === 'math' || s === 'rw' ? s : 'all',
       difficulty: d === 'chill' || d === 'brutal' ? d : 'standard',
       timer: t === 60 || t === 90 || t === 120 ? (t as TimerOpt) : 0,
+      fresh: searchParams.get('fresh') === '1',
     }
   })
   const [bank, setBank] = useState<Awaited<ReturnType<typeof fetchBank>> | null>(null)
@@ -71,10 +77,19 @@ export default function ZenScreen() {
 
   const [sessionLog, setSessionLog] = useState<SessionEntry[]>([])
   const postedRef = useRef<Set<string>>(new Set())
+  /** fresh=1 only: bank ids answered correctly in PAST sessions (fetched from
+   *  student_events) and ids answered correctly during THIS session. */
+  const solvedRef = useRef<Set<string>>(new Set())
+  const sessionSolvedRef = useRef<Set<string>>(new Set())
+
+  const applyFresh = (pool: BankQuestion[]): BankQuestion[] =>
+    config.fresh ? pool.filter((q) => !solvedRef.current.has(q.id)) : pool
 
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [secondsUp, setSecondsUp] = useState(0)
   const [calcOpen, setCalcOpen] = useState(false)
+  /** "Ask CramduckAI" sidebar — offered once a question is checked. */
+  const [askOpen, setAskOpen] = useState(false)
   const lastIdRef = useRef<string | null>(null)
   const shownAtRef = useRef<number>(0)
   const retryId = searchParams.get('retry')
@@ -100,6 +115,7 @@ export default function ZenScreen() {
     setBestRun(0)
     setSessionLog([])
     postedRef.current = new Set()
+    sessionSolvedRef.current = new Set()
     lastIdRef.current = null
     shownAtRef.current = Date.now()
     setSecondsLeft(timer)
@@ -113,6 +129,10 @@ export default function ZenScreen() {
       .then(async (b) => {
         if (cancelled) return
         setBank(b)
+        if (config.fresh) {
+          solvedRef.current = await fetchSolvedIds().catch(() => new Set<string>())
+          if (cancelled) return
+        }
         // Entering via "RETRY" from Mistakes: that question served first.
         // The retry id may be a practice-test display id (A2-RW2-Q20).
         if (retryId) {
@@ -121,7 +141,9 @@ export default function ZenScreen() {
           setResolvedRetryId(resolved)
           const target = [...b.generated, ...b.harvested].find((q) => q.id === resolved)
           if (target) {
-            const rest = shuffle(selectZen(b, 'all', 'standard').filter((q) => q.id !== resolved))
+            const rest = shuffle(
+              applyFresh(selectZen(b, 'all', 'standard').filter((q) => q.id !== resolved)),
+            )
             startWith([target, ...rest], 0)
           }
           return
@@ -133,7 +155,7 @@ export default function ZenScreen() {
           return
         }
         // Straight into the run — config was chosen on the Cramduck tab.
-        const pool = shuffle(selectZen(b, config.subject, config.difficulty))
+        const pool = shuffle(applyFresh(selectZen(b, config.subject, config.difficulty)))
         if (pool.length > 0) startWith(pool, config.timer)
       })
       .finally(() => !cancelled && setLoading(false))
@@ -201,6 +223,7 @@ export default function ZenScreen() {
     setLastRight(right)
     setAnswered((n) => n + 1)
     if (right) {
+      sessionSolvedRef.current.add(question.id)
       setCorrectCount((n) => n + 1)
       setRun((r) => {
         const next = r + 1
@@ -221,7 +244,14 @@ export default function ZenScreen() {
     let pool = queue
     let ni = index + 1
     if (ni >= queue.length) {
-      let reshuffled = shuffle(queue)
+      let base = queue
+      if (config.fresh) {
+        // Fresh runs also skip questions aced during this session; if every
+        // question was aced, cycle the full queue rather than stall.
+        const unseen = queue.filter((q) => !sessionSolvedRef.current.has(q.id))
+        if (unseen.length > 0) base = unseen
+      }
+      let reshuffled = shuffle(base)
       if (reshuffled.length > 1 && reshuffled[0]!.id === lastIdRef.current) {
         reshuffled = [...reshuffled.slice(1), reshuffled[0]!]
       }
@@ -310,9 +340,16 @@ export default function ZenScreen() {
               Back to Cramduck
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (!bank) return
-                startWith(shuffle(selectZen(bank, config.subject, config.difficulty)), config.timer)
+                if (config.fresh) {
+                  // the session just ended — refetch so its right answers count as done
+                  solvedRef.current = await fetchSolvedIds().catch(() => solvedRef.current)
+                }
+                startWith(
+                  shuffle(applyFresh(selectZen(bank, config.subject, config.difficulty))),
+                  config.timer,
+                )
               }}
               className="rounded-full bg-[#3b4ed8] px-7 py-2 text-sm font-semibold text-white hover:bg-[#2f3fb8]"
             >
@@ -440,6 +477,19 @@ export default function ZenScreen() {
             hideFlag
           />
         </div>
+        <AskAiSidebar
+          variant="push"
+          open={askOpen && revealed}
+          onClose={() => setAskOpen(false)}
+          seedKey={question.id}
+          label={`Question ${index + 1}`}
+          context={buildQuestionContext(question, answer, lastRight ?? undefined)}
+          chips={[
+            ...(lastRight === false ? ['Why is my answer wrong?'] : []),
+            'Why is the correct answer right?',
+            'What trap does this question set?',
+          ]}
+        />
       </main>
 
       {revealed && (
@@ -460,6 +510,20 @@ export default function ZenScreen() {
             ) : (
               <p className="mt-2 font-exam-serif text-[15px] italic text-[#5b616e]">No rationale for this one yet.</p>
             )}
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAskOpen((o) => !o)}
+                aria-pressed={askOpen}
+                className={`rounded-full px-5 py-1.5 text-[13px] font-semibold ring-1 transition-colors ${
+                  askOpen
+                    ? 'bg-[#3b4ed8] text-white ring-[#3b4ed8]'
+                    : 'bg-white text-[#3b4ed8] ring-[#3b4ed8] hover:bg-[#eef0fd]'
+                }`}
+              >
+                ✦ Ask CramduckAI
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -183,6 +183,41 @@ function formatPassage(text: string, archetype: string): string {
   return archetype === 'rhetorical-synthesis' ? bulletNotes(t) : reflow(t)
 }
 
+/** Drop \( … \) math spans (balanced-paren scan) so texts can be compared
+ *  with all markup stripped. */
+function stripMathSpans(s: string): string {
+  let out = ''
+  for (let i = 0; i < s.length; ) {
+    if (s[i] === '\\' && s[i + 1] === '(') {
+      let depth = 0
+      let j = i + 1
+      for (; j < s.length; j++) {
+        if (s[j] === '(') depth++
+        else if (s[j] === ')') {
+          depth--
+          if (depth === 0) break
+        }
+      }
+      i = j + 1
+    } else {
+      out += s[i]
+      i++
+    }
+  }
+  return out
+}
+
+/** Some bank/curated records carry a truncated, math-stripped copy of the stem
+ *  in the stimulus/info text. Rendered above the prompt (breakdown view) it
+ *  repeats the question in broken form, so such passages are dropped. */
+function duplicateOfStem(info: string, stem: string): boolean {
+  const norm = (s: string) => stripMathSpans(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+  const a = norm(info)
+  const b = norm(stem)
+  if (Math.min(a.length, b.length) < 60) return false
+  return b.startsWith(a) || a.startsWith(b)
+}
+
 function prettyTaxonomy(code: string): string {
   const slug = code.includes(':') ? code.split(':')[1]! : code
   return slug
@@ -224,7 +259,8 @@ function toQuestion(
     domain,
     verified,
     prompt: payload.stem,
-    passage: stim?.text ? formatPassage(stim.text, archetype) : undefined,
+    passage:
+      stim?.text && !duplicateOfStem(stim.text, payload.stem) ? formatPassage(stim.text, archetype) : undefined,
     table,
     options: payload.choices?.map((c) => c.text),
     correct: payload.correctAnswer,
@@ -256,7 +292,7 @@ function toCuratedQuestion(r: RawHarvested, c: CuratedBlock): BankQuestion {
     verified: true,
     approved: c.review?.status === 'approved',
     prompt: c.prompt,
-    passage: c.info ?? undefined,
+    passage: c.info && !duplicateOfStem(c.info, c.prompt) ? c.info : undefined,
     table,
     options: c.options.length > 0 ? c.options.map((o) => o.text) : undefined,
     correct: c.correctAnswer,
@@ -473,6 +509,32 @@ export async function fetchSessionEvents(startIso: string, endIso: string): Prom
     .lte('occurred_at', endIso)
     .order('id', { ascending: true })
   return (data ?? []) as SessionEvent[]
+}
+
+/** Simulator modules prefix bank ids (`rw1-<source_id>`, `math2h-…`) before
+ *  posting events; zen posts raw ids. Strip the prefix so solved ids match
+ *  the bank. */
+const MODULE_PREFIX_RX = /^(?:rw|math)\d(?:e|h)?-(.+)$/
+
+/** Raw bank ids of questions the signed-in student has EVER answered
+ *  correctly (any mode). Wrong answers are deliberately excluded so missed
+ *  questions keep resurfacing. Powers Zen's "skip done questions" toggle. */
+export async function fetchSolvedIds(): Promise<Set<string>> {
+  const solved = new Set<string>()
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data } = await supabase
+      .from('student_events')
+      .select('question_id')
+      .eq('correct', true)
+      .range(from, from + PAGE_SIZE - 1)
+    const rows = (data ?? []) as Array<{ question_id: string }>
+    for (const r of rows) {
+      const m = MODULE_PREFIX_RX.exec(r.question_id)
+      solved.add(m ? m[1]! : r.question_id)
+    }
+    if (rows.length < PAGE_SIZE) break
+  }
+  return solved
 }
 
 /** Practice-test display ids (A2-RW2-Q20 / B3-M1-Q6) for a set of bank
