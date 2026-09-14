@@ -126,13 +126,13 @@ function ExpandedQuestion({ q, status, onAsk }: { q: BreakdownQuestion; status: 
         </ul>
       )}
       {!question.options && (
-        <p className="cdk-meta">
+        <p className="cdk-meta ans">
           YOUR ANSWER <b className={status === 'correct' ? 'ok' : 'no'}>{answer ?? '—'}</b>
           {' · '}CORRECT <b className="ok">{question.correct}</b>
         </p>
       )}
       {question.options && answer !== undefined && answer !== '' && (
-        <p className="cdk-meta">
+        <p className="cdk-meta ans">
           YOUR ANSWER <b>{answer}</b>
         </p>
       )}

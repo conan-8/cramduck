@@ -230,6 +230,7 @@
 .cdk-opt.no .cdk-opt-tag { color: var(--wrong); }
 .cdk-meta { margin-top: 0; line-height: 28px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .06em; color: var(--muted); }
 .cdk-meta:first-of-type { margin-top: 28px; }
+.cdk-meta.ans { font-size: 14px; }
 .cdk-meta b { color: var(--ink); }
 .cdk-meta .ok { color: var(--right); }
 .cdk-meta .no { color: var(--wrong); }
